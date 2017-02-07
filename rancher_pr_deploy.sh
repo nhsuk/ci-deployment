@@ -19,8 +19,8 @@ if [[ -n "$TRAVIS" ]]; then
 
     install_rancher
 
-    curl -s https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/master/templates/c2s-profiles/0/docker-compose.yml  -o docker-compose.yml
-    curl -s https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/master/templates/c2s-profiles/0/rancher-compose.yml -o rancher-compose.yml
+    curl -s "https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/master/templates/${RANCHER_STACK_NAME}/0/docker-compose.yml"  -o docker-compose.yml
+    curl -s "https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/master/templates/${RANCHER_STACK_NAME}/0/rancher-compose.yml" -o rancher-compose.yml
 
     touch answers.txt
     echo -n "" > answers.txt
@@ -44,7 +44,7 @@ if [[ -n "$TRAVIS" ]]; then
 
     PAYLOAD="{\"body\": \"${MSG}\" }"
 
-    curl -s -d "${PAYLOAD}" "https://api.github.com/repos/nhsuk/connecting-to-services/issues/${TRAVIS_PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}"
+    curl -s -d "${PAYLOAD}" "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}"
 
   fi
 
