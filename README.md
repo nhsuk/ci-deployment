@@ -22,11 +22,12 @@ As the scripts are intended to be by Travis they use a number of environment var
 
 | Variable              | Description                                                                         | Included in Travis environment? |
 |:----------------------|:------------------------------------------------------------------------------------|:----------------------------------------|
-| `DOCKER_REPO`         | The docker repo where the built image should be pushed e.g. nhsuk/docker-image      | NO               |
+| `DOCKER_REPO`         | The docker repo where the built image should be pushed e.g. [nhsuk/profiles](https://hub.docker.com/r/nhsuk/profiles/) | NO               |
 | `DOCKER_USERNAME`     | A username that has permissions to push images                                      | NO               |
 | `DOCKER_PASSWORD`     | The password of the username                                                        | NO               |
+| `GITHUB_ACCESS_TOKEN` | OAUTH token with [public repo access](https://developer.github.com/v3/oauth/#scopes)| NO               |
+| `RANCHER_STACK_NAME`  | Name of directory where rancher config is stored in [nhsuk-rancher-templates](https://github.com/nhsuk/nhsuk-rancher-templates) e.g. `c2s-profiles` | NO              |
 | `SPLUNK_HEC_TOKEN`    | [HTTP Event Collector token](http://dev.splunk.com/view/event-collector/SP-CAAAE7C) | NO               |
-| `RANCHER_STACK_NAME`  | Name of directory where rancher config is stored in [nhsuk-rancher-templates](https://github.com/nhsuk/nhsuk-rancher-templates) | NO              |
 | `TRAVIS`              | Indicates if the environment is `TRAVIS`                                            | YES              |
 | `TRAVIS_PULL_REQUEST` | PR number                                                                           | YES              |
 | `TRAVIS_BRANCH`       | Branch name triggering the build                                                    | YES              |
