@@ -1,0 +1,10 @@
+sudo: required
+
+services:
+  - docker
+
+after_success:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - ./ci-deployment/docker_ci.sh
+  - ./ci-deployment/rancher_pr_deploy.sh
+
