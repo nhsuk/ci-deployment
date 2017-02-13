@@ -28,7 +28,8 @@ As the scripts are intended to be run from within the Travis CI environment they
 | `DOCKER_USERNAME`      | NO     | A username that has permissions to push images                                                                                                      | NO             |
 | `DOCKER_PASSWORD`      | YES    | The password of the username                                                                                                                        | YES            |
 | `GITHUB_ACCESS_TOKEN`  | YES    | OAUTH token with [public repo access](https://developer.github.com/v3/oauth/#scopes)                                                                | YES            |
-| `RANCHER_ACCESS_KEY`   | NO     | The 'user name' part of the API credentials for Rancher access                                                                                      | NO             |
+| `RANCHER_ACCESS_KEY`   | NO     | The 'user name' part of the API credentials for Rancher access [Rancher API tokens](https://docs.rancher.com/rancher/v1.1/en/api/v1/api-keys/) | NO             |
+| `RANCHER_SECRET_KEY`   | NO     | The 'password' part of the API credentials for Rancher access [Rancher API tokens](https://docs.rancher.com/rancher/v1.1/en/api/v1/api-keys/)  | NO             |
 | `RANCHER_ENVIRONMENT`  | NO     | The environment within Rancher where the stack will be deployed to                                                                                  | NO             |
 | `RANCHER_TEMPLATE_NAME`| NO     | Name of directory where Rancher config is stored in [nhsuk-rancher-templates](https://github.com/nhsuk/nhsuk-rancher-templates) e.g. `c2s-profiles` | NO             |
 | `RANCHER_URL`          | NO     | The URL of the Rancher environment                                                                                                                  | NO             |
@@ -37,4 +38,9 @@ As the scripts are intended to be run from within the Travis CI environment they
 | `TRAVIS_PULL_REQUEST`  | NO     | PR number                                                                                                                                           | NO             |
 | `TRAVIS_BRANCH`        | NO     | Branch name triggering the build                                                                                                                    | NO             |
 | `TRAVIS_TAG`           | NO     | Name of tag triggering the build                                                                                                                    | NO             |
+There is a utility script [here](./configure-travis-env.sh) to set the non-Travis environment variables from the command line.
+It assumes you have the Travis CLI installed and you are already logged into Travis.
 
+Finally, it is worth noting that it is possible to run the scripts locally by setting the envirionment variables. For example:
+
+ `TRAVIS=yes RANCHER_TEMPLATE_NAME=c2s-pharmacy-finder TRAVIS_REPO_SLUG=nhsuk/connecting-to-services TRAVIS_PULL_REQUEST=<PR number of an image which still exists> SPLUNK_HEC_TOKEN=<splunk token> GITHUB_ACCESS_TOKEN=<personal access token> ./rancher_pr_deploy.sh nearby-services-api`

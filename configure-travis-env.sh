@@ -1,11 +1,13 @@
 #!/bin/bash
+# shellcheck disable=SC2059
+# rule SC2059 about variables in printf doesn't seem to lead to more legible code
 
-red=$'\e[1;31m'
+# Simple utility script to display current travis environment values and to enter
+# values or leave existing ones unmodified.
+
 grn=$'\e[1;32m'
-yel=$'\e[1;33m'
 blu=$'\e[1;34m'
 mag=$'\e[1;35m'
-cyn=$'\e[1;36m'
 end=$'\e[0m'
 
 setValue() {
