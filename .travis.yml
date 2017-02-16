@@ -3,6 +3,15 @@ sudo: required
 services:
   - docker
 
+env:
+  global:
+  - DOCKER_REPO=nhsuk/${REPLACEME}
+  - DOCKER_USERNAME=nhsukautomata
+  - RANCHER_ACCESS_KEY=655696CC96424E6D4DB0
+  - RANCHER_ENVIRONMENT=c2s-dev
+  - RANCHER_TEMPLATE_NAME=${REPLACEME}
+  - RANCHER_URL=https://rancher.nhschoices.net
+
 after_success:
   - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
   - ./ci-deployment/docker_ci.sh
