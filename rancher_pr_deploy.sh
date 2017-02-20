@@ -28,6 +28,7 @@ if [[ -n "$TRAVIS" ]]; then
     {
       echo "traefik_domain=dev.c2s.nhschoices.net"
       echo "profiles_docker_image_tag=pr-${TRAVIS_PULL_REQUEST}"
+      echo "profiles_db_docker_image_tag=latest"
       echo "splunk_hec_endpoint=https://splunk-collector.cloudapp.net:8088"
       echo "splunk_hec_token=${SPLUNK_HEC_TOKEN}"
       echo "hotjar_id=265857"
