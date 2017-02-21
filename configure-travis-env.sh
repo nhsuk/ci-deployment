@@ -15,7 +15,7 @@ setValue() {
     read -r value
     if [ "${value}" != "" ]
     then
-      travis env set "--${2-private}" "$1" "$value"
+      travis env set "--${2:-private}" "$1" "$value"
     fi
 }
 
