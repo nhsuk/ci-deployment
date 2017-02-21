@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 
-DEPENDANT_SERVICE=$1
+declare -a DEPENDANT_SERVICES=($@)
 
-create_parameter_name() {
+sanitise_repo_name() {
   echo "$1" | tr '-' '_'
+}
+
+get_repo_name() {
+  REPO_SLUG=$1
+  # need two args for the split but ORG is not needed
+  # shellcheck disable=SC2034 
+  IFS=/ read -r ORG REPO <<< "${REPO_SLUG}"
+
+  echo "${REPO}"
 }
 
 install_rancher() {
@@ -31,13 +40,12 @@ if [[ -n "$TRAVIS" ]]; then
     curl -s "https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/feature/changes-for-ci-script/templates/${RANCHER_TEMPLATE_NAME}/0/docker-compose.yml"  -o docker-compose.yml
     curl -s "https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/feature/changes-for-ci-script/templates/${RANCHER_TEMPLATE_NAME}/0/rancher-compose.yml" -o rancher-compose.yml
 
-    # need two args for the split but ORG is not needed
-    # shellcheck disable=SC2034 
-    IFS=/ read -r ORG REPO <<< "${TRAVIS_REPO_SLUG}"
+    REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
+    SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
 
     cat <<EOT  > answers.txt
 traefik_domain=dev.c2s.nhschoices.net
-$(create_parameter_name "$REPO")_docker_image_tag=pr-${TRAVIS_PULL_REQUEST}
+${SANITISED_REPO_NAME}_docker_image_tag=pr-${TRAVIS_PULL_REQUEST}
 splunk_hec_endpoint=https://splunk-collector.cloudapp.net:8088
 splunk_hec_token=${SPLUNK_HEC_TOKEN}
 hotjar_id=265857
@@ -45,13 +53,16 @@ google_id=UA-67365892-5
 webtrends_id=dcs222rfg0jh2hpdaqwc2gmki_9r4q
 EOT
  
-    if [ -n "$DEPENDANT_SERVICE" ]
+    if [ ${#DEPENDANT_SERVICES[@]} -ne 0 ]
     then
-      LATEST_RELEASE=$(curl -s "https://api.github.com/repos/nhsuk/${DEPENDANT_SERVICE}/releases/latest" | jq -r '.tag_name')
-      echo "$(create_parameter_name "$DEPENDANT_SERVICE")_docker_image_tag=${LATEST_RELEASE}" >> answers.txt
+      for DEPENDANT_SERVICE in ${DEPENDANT_SERVICES[*]}; do
+        LATEST_RELEASE=$(curl -s "https://api.github.com/repos/nhsuk/${DEPENDANT_SERVICE}/releases/latest" | jq -r '.tag_name')
+        echo "$(sanitise_repo_name "$DEPENDANT_SERVICE")_docker_image_tag=${LATEST_RELEASE:-latest}" >> answers.txt
+      done
     fi
 
-    RANCHER_STACK_NAME="${REPO}-pr-${TRAVIS_PULL_REQUEST}"
+    RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
+    rancher -w up --pull --upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt
 
     if [ "$(rancher -w up --pull --upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt)" ]
     then

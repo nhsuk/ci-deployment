@@ -43,4 +43,4 @@ It assumes you have the Travis CLI installed and you are already logged into Tra
 
 Finally, it is worth noting that it is possible to run the scripts locally by setting the envirionment variables. For example:
 
- `TRAVIS=yes RANCHER_TEMPLATE_NAME=c2s-pharmacy-finder TRAVIS_REPO_SLUG=nhsuk/connecting-to-services TRAVIS_PULL_REQUEST=<PR number of an image which still exists> SPLUNK_HEC_TOKEN=<splunk token> GITHUB_ACCESS_TOKEN=<personal access token> ./rancher_pr_deploy.sh nearby-services-api`
+ `TRAVIS=true RANCHER_TEMPLATE_NAME=c2s-pharmacy-finder TRAVIS_REPO_SLUG=nhsuk/connecting-to-services TRAVIS_PULL_REQUEST=<PR number of an image which still exists> SPLUNK_HEC_TOKEN=<splunk token> GITHUB_ACCESS_TOKEN=<personal access token> ./rancher_pr_deploy.sh nearby-services-api`
