@@ -15,6 +15,15 @@ get_repo_name() {
   echo "${REPO}"
 }
 
+create_compose_file() {
+
+  COMPOSE_TYPE=$1
+
+  TEMPLATE_URL="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${TEMPLATE_BRANCH_NAME:-master}/templates/${RANCHER_TEMPLATE_NAME}/0/"
+
+  curl -s "${TEMPLATE_URL}/0/$COMPOSE_TYPE}-compose.yml"  -o "${COMPOSE_TYPE}-compose.yml"
+}
+
 install_rancher() {
   RANCHER_CLI_VERSION='v0.4.1'
   mkdir tmp bin
@@ -36,9 +45,9 @@ if [[ -n "$TRAVIS" ]]; then
     then 
       install_rancher
     fi
-
-    curl -s "https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/feature/changes-for-ci-script/templates/${RANCHER_TEMPLATE_NAME}/0/docker-compose.yml"  -o docker-compose.yml
-    curl -s "https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/feature/changes-for-ci-script/templates/${RANCHER_TEMPLATE_NAME}/0/rancher-compose.yml" -o rancher-compose.yml
+ 
+    create_compose_file "docker" 
+    create_compose_file "rancher" 
 
     REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
     SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
@@ -62,7 +71,6 @@ EOT
     fi
 
     RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
-    rancher -w up --pull --upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt
 
     if [ "$(rancher -w up --pull --upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt)" ]
     then
