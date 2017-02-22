@@ -16,7 +16,7 @@ sanitise_repo_name() {
 }
 
 get_repo_name() {
-  REPO_SLUG=$1
+  declare -r REPO_SLUG=$1
   # need two args for the split but ORG is not needed
   # shellcheck disable=SC2034 
   IFS=/ read -r ORG REPO <<< "${REPO_SLUG}"
@@ -24,24 +24,44 @@ get_repo_name() {
   echo "${REPO}"
 }
 
+get_http_response() {
+  declare -r URL=$1
+  #Check file exists
+  declare RESPONSE; RESPONSE=$(curl -IsS -o /dev/null -w '%{http_code}' "${URL}")
+  echo "$RESPONSE"
+}
+
 create_compose_file() {
 
-  COMPOSE_TYPE=$1
-  TEMPLATE_URL="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${TEMPLATE_BRANCH_NAME}/templates/${RANCHER_TEMPLATE_NAME}/0/${COMPOSE_TYPE}-compose.yml"
+  declare -r COMPOSE_TYPE=$1
+  declare -r TEMPLATE_URL="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${TEMPLATE_BRANCH_NAME}/templates/${RANCHER_TEMPLATE_NAME}/0/${COMPOSE_TYPE}-compose.yml"
 
-  #Check file exists
-  RESPONSE=$(curl -IsS -o /dev/null -w '%{http_code}' "${TEMPLATE_URL}")
+  declare RESPONSE; RESPONSE=$(get_http_response "${TEMPLATE_URL}")
 
   if [ "${RESPONSE}" = "200" ]; then
     curl -Ss "${TEMPLATE_URL}"  -o "${COMPOSE_TYPE}-compose.yml"
   else
-    echo "Failed to get ${TEMPLATE_URL} (response code: ${RESPONSE})"
+    echo "Failed to get ${TEMPLATE_URL} (response code: ${RESPONSE})" >&2
+    exit 1
+  fi
+}
+
+get_latest_release() {
+  declare -r SERVICE=$1
+  declare -r URL="https://api.github.com/repos/nhsuk/${SERVICE}"
+  declare RESPONSE; RESPONSE=$(get_http_response "${URL}")
+
+  if [ "${RESPONSE}" = "200" ]; then
+    LATEST_RELEASE=$(curl -s "${URL}/releases/latest" | jq -r '.tag_name')
+    echo "$LATEST_RELEASE"
+  else
+    echo "Failed to get latest release for ${URL} (response code: ${RESPONSE})" >&2
     exit 1
   fi
 }
 
 install_rancher() {
-  RANCHER_CLI_VERSION='v0.4.1'
+  declare -r RANCHER_CLI_VERSION='v0.4.1'
   mkdir tmp bin
   wget -qO- https://github.com/rancher/cli/releases/download/${RANCHER_CLI_VERSION}/rancher-linux-amd64-${RANCHER_CLI_VERSION}.tar.gz | tar xvz -C tmp
   mv tmp/rancher-${RANCHER_CLI_VERSION}/rancher bin/rancher
@@ -50,7 +70,6 @@ install_rancher() {
   PATH=$PATH:./bin
 }
 
-declare -a DEPENDANT_SERVICES=($@)
 
 if [ "$TRAVIS" == true ]; then
 
@@ -75,14 +94,17 @@ hotjar_id=265857
 google_id=UA-67365892-5
 webtrends_id=dcs222rfg0jh2hpdaqwc2gmki_9r4q
 EOT
- 
-    if [ ${#DEPENDANT_SERVICES[@]} -ne 0 ]; then
 
-      for DEPENDANT_SERVICE in ${DEPENDANT_SERVICES[*]}; do
-        LATEST_RELEASE=$(curl -s "https://api.github.com/repos/nhsuk/${DEPENDANT_SERVICE}/releases/latest" | jq -r '.tag_name')
-        echo "$(sanitise_repo_name "$DEPENDANT_SERVICE")_docker_image_tag=${LATEST_RELEASE:-latest}" >> answers.txt
-      done
-    fi
+    DEPENDANT_SERVICES=$( \
+      sed -n 's/^.*- variable: "\([a-z_]*\)\(_docker_image_tag"\)/\1/p' rancher-compose.yml | \
+      tr '_' '-' | \
+      grep -v "${SANITISED_REPO_NAME}" \
+    )
+
+    for DEPENDANT_SERVICE in ${DEPENDANT_SERVICES}; do
+      LATEST_RELEASE=$(get_latest_release "${DEPENDANT_SERVICE}")
+      echo "$(sanitise_repo_name "$DEPENDANT_SERVICE")_docker_image_tag=${LATEST_RELEASE:-latest}" >> answers.txt
+    done
 
     RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
 
