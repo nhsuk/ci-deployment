@@ -11,6 +11,8 @@ set -e
 #prevents errors in a pipeline from being masked
 set -o pipefail
 
+declare -r NHSUK_GITHUB_URL="https://api.github.com/repos/nhsuk"
+
 sanitise_repo_name() {
   echo "$1" | tr '-' '_'
 }
@@ -32,9 +34,8 @@ get_http_response() {
 }
 
 create_compose_file() {
-
   declare -r COMPOSE_TYPE=$1
-  declare -r TEMPLATE_URL="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${TEMPLATE_BRANCH_NAME}/templates/${RANCHER_TEMPLATE_NAME}/0/${COMPOSE_TYPE}-compose.yml"
+  declare -r TEMPLATE_URL="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${RANCHER_TEMPLATE_BRANCH_NAME:-master}/templates/${RANCHER_TEMPLATE_NAME}/0/${COMPOSE_TYPE}-compose.yml"
 
   declare RESPONSE; RESPONSE=$(get_http_response "${TEMPLATE_URL}")
 
@@ -46,18 +47,29 @@ create_compose_file() {
   fi
 }
 
-get_latest_release() {
-  declare -r SERVICE=$1
-  declare -r URL="https://api.github.com/repos/nhsuk/${SERVICE}"
+check_repo_exists() {
+  declare -r REPO=$1
+  declare -r URL="${NHSUK_GITHUB_URL}/${REPO}"
   declare RESPONSE; RESPONSE=$(get_http_response "${URL}")
 
-  if [ "${RESPONSE}" = "200" ]; then
-    LATEST_RELEASE=$(curl -s "${URL}/releases/latest" | jq -r '.tag_name')
-    echo "$LATEST_RELEASE"
-  else
-    echo "Failed to get latest release for ${URL} (response code: ${RESPONSE})" >&2
+  if [ "${RESPONSE}" != "200" ]; then
+    echo "Could not access GitHub repo '${REPO}'. Check it exists and is public. (url: ${URL}, response code: ${RESPONSE})." >&2
     exit 1
   fi
+}
+
+get_latest_release() {
+  declare -r REPO=$1
+  declare -r URL="${NHSUK_GITHUB_URL}/${REPO}"
+
+  LATEST_RELEASE=$(curl -s "${URL}/releases/latest" | jq -r '.tag_name')
+
+  if [ "${LATEST_RELEASE}" == "null" ]; then
+    echo "GitHub repo '${REPO}' does not have a latest release. (url: ${URL})." >&2
+    exit 1
+  fi
+
+  echo "$LATEST_RELEASE"
 }
 
 install_rancher() {
@@ -97,13 +109,16 @@ EOT
 
     DEPENDANT_SERVICES=$( \
       sed -n 's/^.*- variable: "\([a-z_]*\)\(_docker_image_tag"\)/\1/p' rancher-compose.yml | \
-      tr '_' '-' | \
-      grep -v "${SANITISED_REPO_NAME}" \
+      grep -v "${SANITISED_REPO_NAME}" | \
+      tr '_' '-' \
     )
 
+    echo -e "Dependent services identified from rancher-compose.yml in ${RANCHER_TEMPLATE_NAME}:\n${DEPENDANT_SERVICES}"
+
     for DEPENDANT_SERVICE in ${DEPENDANT_SERVICES}; do
+      check_repo_exists "${DEPENDANT_SERVICE}"
       LATEST_RELEASE=$(get_latest_release "${DEPENDANT_SERVICE}")
-      echo "$(sanitise_repo_name "$DEPENDANT_SERVICE")_docker_image_tag=${LATEST_RELEASE:-latest}" >> answers.txt
+      echo "$(sanitise_repo_name "$DEPENDANT_SERVICE")_docker_image_tag=${LATEST_RELEASE}" >> answers.txt
     done
 
     RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
