@@ -1,7 +1,79 @@
 #!/usr/bin/env bash
 
+# See here http://redsymbol.net/articles/unofficial-bash-strict-mode/ the rational for using u, e and o bash options
+
+#Display error message for missing variables
+set -u
+
+#Exit with error code if any command fails
+set -e
+
+#prevents errors in a pipeline from being masked
+set -o pipefail
+
+declare -r NHSUK_GITHUB_URL="https://api.github.com/repos/nhsuk"
+
+sanitise_repo_name() {
+  echo "$1" | tr '-' '_'
+}
+
+get_repo_name() {
+  declare -r REPO_SLUG=$1
+  # need two args for the split but ORG is not needed
+  # shellcheck disable=SC2034 
+  IFS=/ read -r ORG REPO <<< "${REPO_SLUG}"
+
+  echo "${REPO}"
+}
+
+get_http_response() {
+  declare -r URL=$1
+  #Check file exists
+  declare RESPONSE; RESPONSE=$(curl -IsS -o /dev/null -w '%{http_code}' "${URL}")
+  echo "$RESPONSE"
+}
+
+create_compose_file() {
+  declare -r COMPOSE_TYPE=$1
+  declare -r TEMPLATE_URL="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${RANCHER_TEMPLATE_BRANCH_NAME:-master}/templates/${RANCHER_TEMPLATE_NAME}/0/${COMPOSE_TYPE}-compose.yml"
+
+  declare RESPONSE; RESPONSE=$(get_http_response "${TEMPLATE_URL}")
+
+  if [ "${RESPONSE}" = "200" ]; then
+    curl -Ss "${TEMPLATE_URL}"  -o "${COMPOSE_TYPE}-compose.yml"
+  else
+    echo "Failed to get ${TEMPLATE_URL} (response code: ${RESPONSE})" >&2
+    exit 1
+  fi
+}
+
+check_repo_exists() {
+  declare -r REPO=$1
+  declare -r URL="${NHSUK_GITHUB_URL}/${REPO}"
+  declare RESPONSE; RESPONSE=$(get_http_response "${URL}")
+
+  if [ "${RESPONSE}" != "200" ]; then
+    echo "Could not access GitHub repo '${REPO}'. Check it exists and is public. (url: ${URL}, response code: ${RESPONSE})." >&2
+    exit 1
+  fi
+}
+
+get_latest_release() {
+  declare -r REPO=$1
+  declare -r URL="${NHSUK_GITHUB_URL}/${REPO}"
+
+  LATEST_RELEASE=$(curl -s "${URL}/releases/latest" | jq -r '.tag_name')
+
+  if [ "${LATEST_RELEASE}" == "null" ]; then
+    echo "GitHub repo '${REPO}' does not have a latest release. (url: ${URL})." >&2
+    exit 1
+  fi
+
+  echo "$LATEST_RELEASE"
+}
+
 install_rancher() {
-  RANCHER_CLI_VERSION='v0.4.1'
+  declare -r RANCHER_CLI_VERSION='v0.4.1'
   mkdir tmp bin
   wget -qO- https://github.com/rancher/cli/releases/download/${RANCHER_CLI_VERSION}/rancher-linux-amd64-${RANCHER_CLI_VERSION}.tar.gz | tar xvz -C tmp
   mv tmp/rancher-${RANCHER_CLI_VERSION}/rancher bin/rancher
@@ -10,41 +82,63 @@ install_rancher() {
   PATH=$PATH:./bin
 }
 
-if [[ -n "$TRAVIS" ]]; then
 
-  echo "Travis detected"
+if [ "$TRAVIS" == true ]; then
 
-  # IF PULL REQUEST
-  if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+  if [ "$TRAVIS_PULL_REQUEST" != false ]; then
 
-    install_rancher
+    if [ ! "$(command -v rancher)" ]; then 
+      install_rancher
+    fi
 
-    curl -s "https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/master/templates/${RANCHER_TEMPLATE_NAME}/0/docker-compose.yml"  -o docker-compose.yml
-    curl -s "https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/master/templates/${RANCHER_TEMPLATE_NAME}/0/rancher-compose.yml" -o rancher-compose.yml
+    create_compose_file "docker" 
+    create_compose_file "rancher" 
 
-    touch answers.txt
-    echo -n "" > answers.txt
+    REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
+    SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
 
-    {
-      echo "traefik_domain=dev.c2s.nhschoices.net"
-      echo "profiles_docker_image_tag=pr-${TRAVIS_PULL_REQUEST}"
-      echo "splunk_hec_endpoint=https://splunk-collector.cloudapp.net:8088"
-      echo "splunk_hec_token=${SPLUNK_HEC_TOKEN}"
-      echo "hotjar_id=265857"
-      echo "google_id=UA-67365892-5"
-      echo "webtrends_id=dcs222rfg0jh2hpdaqwc2gmki_9r4q"
-    } >> answers.txt
+    cat <<EOT  > answers.txt
+traefik_domain=dev.c2s.nhschoices.net
+${SANITISED_REPO_NAME}_docker_image_tag=pr-${TRAVIS_PULL_REQUEST}
+splunk_hec_endpoint=https://splunk-collector.cloudapp.net:8088
+splunk_hec_token=${SPLUNK_HEC_TOKEN}
+hotjar_id=265857
+google_id=UA-67365892-5
+webtrends_id=dcs222rfg0jh2hpdaqwc2gmki_9r4q
+EOT
 
-    RANCHER_STACK_NAME="profiles-pr-${TRAVIS_PULL_REQUEST}"
+    DEPENDANT_SERVICES=$( \
+      sed -n 's/^.*- variable: "\([a-z_]*\)\(_docker_image_tag"\)/\1/p' rancher-compose.yml | \
+      grep -v "${SANITISED_REPO_NAME}" | \
+      tr '_' '-' \
+    )
 
-    rancher -w up --pull --upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt
+    echo -e "Dependent services identified from rancher-compose.yml in ${RANCHER_TEMPLATE_NAME}:\n${DEPENDANT_SERVICES}"
 
-    DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
-    MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
+    for DEPENDANT_SERVICE in ${DEPENDANT_SERVICES}; do
+      check_repo_exists "${DEPENDANT_SERVICE}"
+      LATEST_RELEASE=$(get_latest_release "${DEPENDANT_SERVICE}")
+      echo "$(sanitise_repo_name "$DEPENDANT_SERVICE")_docker_image_tag=${LATEST_RELEASE}" >> answers.txt
+    done
+
+    RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
+
+    if rancher -w up --pull --upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt; then
+      DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
+      MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
+    else
+      MSG=":warning: deployment of ${TRAVIS_PULL_REQUEST} for ${TRAVIS_REPO_SLUG} failed"
+    fi
 
     PAYLOAD="{\"body\": \"${MSG}\" }"
 
-    curl -s -d "${PAYLOAD}" "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}"
+    GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
+
+    if [ "${GITHUB_RESPONSE}" = "201" ]; then
+      echo "Comment '${MSG}' added to pr ${TRAVIS_PULL_REQUEST} on ${TRAVIS_REPO_SLUG}"
+    else
+      echo "Failed to add comment to pr ${TRAVIS_PULL_REQUEST} on ${TRAVIS_REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+    fi
 
   fi
 
