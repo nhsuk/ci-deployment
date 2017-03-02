@@ -13,6 +13,18 @@ set -o pipefail
 
 declare -r NHSUK_GITHUB_URL="https://api.github.com/repos/nhsuk"
 
+find_latest_rancher_template() {
+
+  declare -r TEMPLATE_URL_BASE=$1
+  declare TEMPLATE_VERSION; TEMPLATE_VERSION=0
+
+  until [ "$(get_http_response "${TEMPLATE_URL_BASE}/${TEMPLATE_VERSION}/docker-compose.yml")" != "200" ]; do
+    TEMPLATE_VERSION=$((TEMPLATE_VERSION + 1))
+  done
+
+  echo $((TEMPLATE_VERSION - 1))
+}
+
 sanitise_repo_name() {
   echo "$1" | tr '-' '_'
 }
@@ -20,7 +32,7 @@ sanitise_repo_name() {
 get_repo_name() {
   declare -r REPO_SLUG=$1
   # need two args for the split but ORG is not needed
-  # shellcheck disable=SC2034 
+  # shellcheck disable=SC2034
   IFS=/ read -r ORG REPO <<< "${REPO_SLUG}"
 
   echo "${REPO}"
@@ -35,7 +47,11 @@ get_http_response() {
 
 create_compose_file() {
   declare -r COMPOSE_TYPE=$1
-  declare -r TEMPLATE_URL="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${RANCHER_TEMPLATE_BRANCH_NAME:-master}/templates/${RANCHER_TEMPLATE_NAME}/0/${COMPOSE_TYPE}-compose.yml"
+
+  declare -r TEMPLATE_URL_BASE="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${RANCHER_TEMPLATE_BRANCH_NAME:-master}/templates/${RANCHER_TEMPLATE_NAME}"
+
+  TEMPLATE_VERSION=$(find_latest_rancher_template "${TEMPLATE_URL_BASE}")
+  declare -r TEMPLATE_URL="${TEMPLATE_URL_BASE}/${TEMPLATE_VERSION}/${COMPOSE_TYPE}-compose.yml"
 
   declare RESPONSE; RESPONSE=$(get_http_response "${TEMPLATE_URL}")
 
@@ -87,12 +103,12 @@ if [ "$TRAVIS" == true ]; then
 
   if [ "$TRAVIS_PULL_REQUEST" != false ]; then
 
-    if [ ! "$(command -v rancher)" ]; then 
+    if [ ! "$(command -v rancher)" ]; then
       install_rancher
     fi
 
-    create_compose_file "docker" 
-    create_compose_file "rancher" 
+    create_compose_file "docker"
+    create_compose_file "rancher"
 
     REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
     SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
