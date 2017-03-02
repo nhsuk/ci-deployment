@@ -123,7 +123,7 @@ EOT
 
     RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
 
-    if rancher -w up --pull --upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt; then
+    if rancher -w up --force-upgrade --confirm-upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt; then
       DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
       MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
     else
