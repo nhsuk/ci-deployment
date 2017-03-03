@@ -88,24 +88,9 @@ get_latest_release() {
   echo "$LATEST_RELEASE"
 }
 
-install_rancher() {
-  declare -r RANCHER_CLI_VERSION='v0.4.1'
-  mkdir tmp bin
-  wget -qO- https://github.com/rancher/cli/releases/download/${RANCHER_CLI_VERSION}/rancher-linux-amd64-${RANCHER_CLI_VERSION}.tar.gz | tar xvz -C tmp
-  mv tmp/rancher-${RANCHER_CLI_VERSION}/rancher bin/rancher
-  chmod +x bin/rancher
-  rm -r tmp/rancher-${RANCHER_CLI_VERSION}
-  PATH=$PATH:./bin
-}
-
-
 if [ "$TRAVIS" == true ]; then
 
   if [ "$TRAVIS_PULL_REQUEST" != false ]; then
-
-    if [ ! "$(command -v rancher)" ]; then
-      install_rancher
-    fi
 
     create_compose_file "docker"
     create_compose_file "rancher"
