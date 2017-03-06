@@ -123,11 +123,13 @@ google_id=UA-67365892-5
 webtrends_id=dcs222rfg0jh2hpdaqwc2gmki_9r4q
 EOT
 
-    DEPENDANT_SERVICES=$( \
+    # The horrible grep hack below is because grep returns an exit code of 1 if no matches are found
+    # (this is a valid event) and the set -e will then cause the script to exit.
+    # See http://stackoverflow.com/questions/6550484/avoid-grep-returning-error-when-input-doesnt-match
+    DEPENDANT_SERVICES=$(\
       sed -n 's/^.*- variable: "\([a-z_]*\)\(_docker_image_tag"\)/\1/p' rancher-compose.yml | \
-      grep -v "${SANITISED_REPO_NAME}" | \
-      tr '_' '-' \
-    )
+      { grep -v "^${SANITISED_REPO_NAME}$" || true; } | \
+      tr '_' '-')
 
     echo -e "Dependent services identified from rancher-compose.yml in ${RANCHER_TEMPLATE_NAME}:\n${DEPENDANT_SERVICES}"
 
