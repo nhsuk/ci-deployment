@@ -104,7 +104,7 @@ get_latest_release() {
 }
 
 install_rancher() {
-  declare -r RANCHER_CLI_VERSION='v0.4.1'
+  declare -r RANCHER_CLI_VERSION='v0.6.0-rc2'
   mkdir tmp bin
   wget -qO- https://github.com/rancher/cli/releases/download/${RANCHER_CLI_VERSION}/rancher-linux-amd64-${RANCHER_CLI_VERSION}.tar.gz | tar xvz -C tmp
   mv tmp/rancher-${RANCHER_CLI_VERSION}/rancher bin/rancher
