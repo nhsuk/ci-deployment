@@ -11,24 +11,6 @@ set -e
 #prevents errors in a pipeline from being masked
 set -o pipefail
 
-declare -r NHSUK_GITHUB_URL="https://api.github.com/repos/nhsuk"
-
-find_latest_rancher_template() {
-
-  declare -r TEMPLATE_URL_BASE=$1
-  declare TEMPLATE_VERSION; TEMPLATE_VERSION=0
-
-  until [ "$(get_http_response "${TEMPLATE_URL_BASE}/${TEMPLATE_VERSION}/docker-compose.yml")" != "200" ]; do
-    TEMPLATE_VERSION=$((TEMPLATE_VERSION + 1))
-  done
-
-  echo $((TEMPLATE_VERSION - 1))
-}
-
-sanitise_repo_name() {
-  echo "$1" | tr '-' '_'
-}
-
 get_repo_name() {
   declare -r REPO_SLUG=$1
   # need two args for the split but ORG is not needed
@@ -38,95 +20,16 @@ get_repo_name() {
   echo "${REPO}"
 }
 
-get_http_response() {
-  declare -r URL=$1
-  #Check file exists
-  declare RESPONSE; RESPONSE=$(curl -IsS -o /dev/null -w '%{http_code}' "${URL}")
-  echo "$RESPONSE"
-}
-
-create_compose_file() {
-  declare -r COMPOSE_TYPE=$1
-
-  declare -r TEMPLATE_URL_BASE="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${RANCHER_TEMPLATE_BRANCH_NAME:-master}/templates/${RANCHER_TEMPLATE_NAME}"
-
-  TEMPLATE_VERSION=$(find_latest_rancher_template "${TEMPLATE_URL_BASE}")
-  declare -r TEMPLATE_URL="${TEMPLATE_URL_BASE}/${TEMPLATE_VERSION}/${COMPOSE_TYPE}-compose.yml"
-
-  declare RESPONSE; RESPONSE=$(get_http_response "${TEMPLATE_URL}")
-
-  if [ "${RESPONSE}" = "200" ]; then
-    curl -Ss "${TEMPLATE_URL}"  -o "${COMPOSE_TYPE}-compose.yml"
-  else
-    echo "Failed to get ${TEMPLATE_URL} (response code: ${RESPONSE})" >&2
-    exit 1
-  fi
-}
-
-check_repo_exists() {
-  declare -r REPO=$1
-  declare -r URL="${NHSUK_GITHUB_URL}/${REPO}"
-  declare RESPONSE; RESPONSE=$(get_http_response "${URL}")
-
-  if [ "${RESPONSE}" != "200" ]; then
-    echo "Could not access GitHub repo '${REPO}'. Check it exists and is public. (url: ${URL}, response code: ${RESPONSE})." >&2
-    exit 1
-  fi
-}
-
-get_latest_release() {
-  declare -r REPO=$1
-  declare -r URL="${NHSUK_GITHUB_URL}/${REPO}"
-
-  LATEST_RELEASE=$(curl -s "${URL}/releases/latest" | jq -r '.tag_name')
-
-  if [ "${LATEST_RELEASE}" == "null" ]; then
-    echo "GitHub repo '${REPO}' does not have a latest release. (url: ${URL})." >&2
-    exit 1
-  fi
-
-  echo "$LATEST_RELEASE"
-}
-
 if [ "$TRAVIS" == true ]; then
 
   if [ "$TRAVIS_PULL_REQUEST" != false ]; then
 
-    create_compose_file "docker"
-    create_compose_file "rancher"
-
     REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
-    SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
-
-    cat <<EOT  > answers.txt
-traefik_domain=dev.c2s.nhschoices.net
-${SANITISED_REPO_NAME}_docker_image_tag=pr-${TRAVIS_PULL_REQUEST}
-splunk_hec_endpoint=https://splunk-collector.cloudapp.net:8088
-splunk_hec_token=${SPLUNK_HEC_TOKEN}
-hotjar_id=265857
-google_id=UA-67365892-5
-webtrends_id=dcs222rfg0jh2hpdaqwc2gmki_9r4q
-EOT
-
-    # The horrible grep hack below is because grep returns an exit code of 1 if no matches are found
-    # (this is a valid event) and the set -e will then cause the script to exit.
-    # See http://stackoverflow.com/questions/6550484/avoid-grep-returning-error-when-input-doesnt-match
-    DEPENDANT_SERVICES=$(\
-      sed -n 's/^.*- variable: "\([a-z_]*\)\(_docker_image_tag"\)/\1/p' rancher-compose.yml | \
-      { grep -v "^${SANITISED_REPO_NAME}$" || true; } | \
-      tr '_' '-')
-
-    echo -e "Dependent services identified from rancher-compose.yml in ${RANCHER_TEMPLATE_NAME}:\n${DEPENDANT_SERVICES}"
-
-    for DEPENDANT_SERVICE in ${DEPENDANT_SERVICES}; do
-      check_repo_exists "${DEPENDANT_SERVICE}"
-      LATEST_RELEASE=$(get_latest_release "${DEPENDANT_SERVICE}")
-      echo "$(sanitise_repo_name "$DEPENDANT_SERVICE")_docker_image_tag=${LATEST_RELEASE}" >> answers.txt
-    done
-
     RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
+    RANCHER_CATALOG_NAME="NHSuk (Staging)/${RANCHER_TEMPLATE_NAME}"
 
-    if rancher -w up --force-upgrade --confirm-upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt; then
+    # The echo accepts the default answers in an interactive script.
+    if echo | rancher --env c2s-dev catalog install --name "${RANCHER_STACK_NAME}" "${RANCHER_CATALOG_NAME}"; then
       DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
       MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
     else
