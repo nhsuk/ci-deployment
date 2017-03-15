@@ -26,7 +26,7 @@ find_latest_rancher_template() {
 }
 
 sanitise_repo_name() {
-  echo "$1" | tr '-' '_'
+  echo "$1" | tr '-' '_' | tr '[:lower:]' '[:upper:]'
 }
 
 get_repo_name() {
@@ -110,38 +110,16 @@ if [ "$TRAVIS" == true ]; then
     create_compose_file "docker"
     create_compose_file "rancher"
 
+    eval "$(python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)' < rancher-compose.yml | jq --raw-output '.catalog.questions[] | select(.variable != "gp_finder_docker_image_tag" and .default != null) | @text "export \(.variable)=\(.default)"')"
+
     REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
     SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
 
-    cat <<EOT  > answers.txt
-traefik_domain=dev.c2s.nhschoices.net
-${SANITISED_REPO_NAME}_docker_image_tag=pr-${TRAVIS_PULL_REQUEST}
-splunk_hec_endpoint=https://splunk-collector.cloudapp.net:8088
-splunk_hec_token=${SPLUNK_HEC_TOKEN}
-hotjar_id=265857
-google_id=UA-67365892-5
-webtrends_id=dcs222rfg0jh2hpdaqwc2gmki_9r4q
-EOT
-
-    # The horrible grep hack below is because grep returns an exit code of 1 if no matches are found
-    # (this is a valid event) and the set -e will then cause the script to exit.
-    # See http://stackoverflow.com/questions/6550484/avoid-grep-returning-error-when-input-doesnt-match
-    DEPENDANT_SERVICES=$(\
-      sed -n 's/^.*- variable: "\([a-z_]*\)\(_docker_image_tag"\)/\1/p' rancher-compose.yml | \
-      { grep -v "^${SANITISED_REPO_NAME}$" || true; } | \
-      tr '_' '-')
-
-    echo -e "Dependent services identified from rancher-compose.yml in ${RANCHER_TEMPLATE_NAME}:\n${DEPENDANT_SERVICES}"
-
-    for DEPENDANT_SERVICE in ${DEPENDANT_SERVICES}; do
-      check_repo_exists "${DEPENDANT_SERVICE}"
-      LATEST_RELEASE=$(get_latest_release "${DEPENDANT_SERVICE}")
-      echo "$(sanitise_repo_name "$DEPENDANT_SERVICE")_docker_image_tag=${LATEST_RELEASE}" >> answers.txt
-    done
+    eval "export ${SANITISED_REPO_NAME}_DOCKER_IMAGE_TAG=pr-${TRAVIS_PULL_REQUEST}"
 
     RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
 
-    if rancher -w up --force-upgrade --confirm-upgrade -d --stack "${RANCHER_STACK_NAME}" --env-file answers.txt; then
+    if rancher -w up --force-upgrade --confirm-upgrade -d --stack "${RANCHER_STACK_NAME}"; then
       DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
       MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
     else
