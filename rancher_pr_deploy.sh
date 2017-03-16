@@ -13,6 +13,18 @@ set -o pipefail
 
 declare -r NHSUK_GITHUB_URL="https://api.github.com/repos/nhsuk"
 
+fold_start() {
+  if [[ -n $TRAVIS ]]; then
+    printf "%s\n" "travis_fold:start:$*"
+  fi
+}
+
+fold_end() {
+  if [[ -n $TRAVIS ]]; then
+    printf "%s\n" "travis_fold:end:$*"
+  fi
+}
+
 find_latest_rancher_template() {
 
   declare -r TEMPLATE_URL_BASE=$1
@@ -47,20 +59,23 @@ get_http_response() {
 
 create_compose_file() {
   declare -r COMPOSE_TYPE=$1
-
+  declare -r FILENAME="${COMPOSE_TYPE}-compose.yml"
   declare -r TEMPLATE_URL_BASE="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${RANCHER_TEMPLATE_BRANCH_NAME:-master}/templates/${RANCHER_TEMPLATE_NAME}"
 
   TEMPLATE_VERSION=$(find_latest_rancher_template "${TEMPLATE_URL_BASE}")
   declare -r TEMPLATE_URL="${TEMPLATE_URL_BASE}/${TEMPLATE_VERSION}/${COMPOSE_TYPE}-compose.yml"
 
+
   declare RESPONSE; RESPONSE=$(get_http_response "${TEMPLATE_URL}")
 
   if [ "${RESPONSE}" = "200" ]; then
-    curl -Ss "${TEMPLATE_URL}"  -o "${COMPOSE_TYPE}-compose.yml"
+    curl -Ss "${TEMPLATE_URL}"  -o "${FILENAME}"
   else
     echo "Failed to get ${TEMPLATE_URL} (response code: ${RESPONSE})" >&2
     exit 1
   fi
+
+  echo -e "\n${FILENAME}\n"; cat "${FILENAME}"
 }
 
 check_repo_exists() {
@@ -106,11 +121,12 @@ if [ "$TRAVIS" == true ]; then
       install_rancher
     fi
 
+    fold_start "Getting compose files"
+
     create_compose_file "docker"
     create_compose_file "rancher"
 
-    cat docker-compose.yml
-    cat rancher-compose.yml
+    fold_end "Getting compose files"
 
     eval "$(python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)' < rancher-compose.yml | jq --raw-output '.catalog.questions[] | select(.variable != "gp_finder_docker_image_tag" and .default != null) | @text "export \(.variable)=\(.default)"')"
 
@@ -121,14 +137,16 @@ if [ "$TRAVIS" == true ]; then
 
     RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
 
-    echo "Building rancher stack ${RANCHER_STACK_NAME} in environment ${RANCHER_ENVIRONMENT}"
+    echo -e "\nBuilding rancher stack ${RANCHER_STACK_NAME} in environment ${RANCHER_ENVIRONMENT}\n"
 
+    fold_start "Rancher up"
     if rancher -w up --force-upgrade --confirm-upgrade -d --stack "${RANCHER_STACK_NAME}"; then
       DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
       MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
     else
       MSG=":warning: deployment of ${TRAVIS_PULL_REQUEST} for ${TRAVIS_REPO_SLUG} failed"
     fi
+    fold_end "Rancher up"
 
     PAYLOAD="{\"body\": \"${MSG}\" }"
 
