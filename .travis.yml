@@ -13,5 +13,6 @@ env:
 after_success:
   - pip install pyaml
   - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - ./ci-deployment/install_rancher.sh
   - ./ci-deployment/docker_ci.sh
   - ./ci-deployment/rancher_pr_deploy.sh
