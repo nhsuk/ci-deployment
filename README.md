@@ -23,7 +23,7 @@ Including this repo within your own (as detailed below) will:
 
 ## Environment variables
 
-As the scripts are intended to be run from within the Travis CI environment they use a number of environment variables available within that environment. The table below highlights those that are used along with any additional ones that need to be added to the environment. Additional information about Travis environment variables can be found https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables. To help setting up Travis all of the non-secret env vars have been added to the example `.travis.yml`
+As the scripts are intended to be run from within the Travis CI environment they use a number of environment variables available within that environment. The table below highlights those that are used along with any additional ones that need to be added to the environment. Additional information about Travis environment variables can be found https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables. To help setting up Travis some of the non-secret env vars have been added to the example `.travis.yml`
 
 | Variable               | Secret | Description                                                                                                                                         | Add to Travis? |
 |:-----------------------|:-------|:----------------------------------------------------------------------------------------------------------------------------------------------------|:---------------|
@@ -31,9 +31,9 @@ As the scripts are intended to be run from within the Travis CI environment they
 | `DOCKER_USERNAME`      | NO     | A username that has permissions to push images                                                                                                      | NO             |
 | `DOCKER_PASSWORD`      | YES    | The password of the username                                                                                                                        | YES            |
 | `GITHUB_ACCESS_TOKEN`  | YES    | OAUTH token with [public repo access](https://developer.github.com/v3/oauth/#scopes)                                                                | YES            |
-| `RANCHER_ACCESS_KEY`   | NO     | The 'user name' part of the API credentials for Rancher access [Rancher API tokens](https://docs.rancher.com/rancher/v1.1/en/api/v1/api-keys/) | NO             |
-| `RANCHER_SECRET_KEY`   | YES     | The 'password' part of the API credentials for Rancher access [Rancher API tokens](https://docs.rancher.com/rancher/v1.1/en/api/v1/api-keys/)  | NO             |
-| `RANCHER_ENVIRONMENT`  | NO     | The environment within Rancher where the stack will be deployed to                                                                                  | NO             |
+| `RANCHER_ACCESS_KEY`   | NO     | The 'user name' part of the API credentials for Rancher access [Rancher API tokens](https://docs.rancher.com/rancher/v1.1/en/api/v1/api-keys/)      | YES            |
+| `RANCHER_SECRET_KEY`   | YES    | The 'password' part of the API credentials for Rancher access [Rancher API tokens](https://docs.rancher.com/rancher/v1.1/en/api/v1/api-keys/)       | YES            |
+| `RANCHER_ENVIRONMENT`  | NO     | The environment within Rancher where the stack will be deployed to                                                                                  | YES            |
 | `RANCHER_TEMPLATE_NAME`| NO     | Name of directory where Rancher config is stored in [nhsuk-rancher-templates](https://github.com/nhsuk/nhsuk-rancher-templates) e.g. `c2s-profiles` | NO             |
 | `RANCHER_TEMPLATE_BRANCH_NAME`| NO     | Optional and for development use only. Gives the ability to specify a branch other than the default (`master`). | NO             |
 | `RANCHER_URL`          | NO     | The URL of the Rancher environment                                                                                                                  | NO             |
