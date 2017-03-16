@@ -98,7 +98,6 @@ install_rancher() {
   PATH=$PATH:./bin
 }
 
-
 if [ "$TRAVIS" == true ]; then
 
   if [ "$TRAVIS_PULL_REQUEST" != false ]; then
@@ -110,6 +109,9 @@ if [ "$TRAVIS" == true ]; then
     create_compose_file "docker"
     create_compose_file "rancher"
 
+    cat docker-compose.yml
+    cat rancher-compose.yml
+
     eval "$(python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)' < rancher-compose.yml | jq --raw-output '.catalog.questions[] | select(.variable != "gp_finder_docker_image_tag" and .default != null) | @text "export \(.variable)=\(.default)"')"
 
     REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
@@ -118,6 +120,8 @@ if [ "$TRAVIS" == true ]; then
     eval "export ${SANITISED_REPO_NAME}_DOCKER_IMAGE_TAG=pr-${TRAVIS_PULL_REQUEST}"
 
     RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
+
+    echo "Building rancher stack ${RANCHER_STACK_NAME} in environment ${RANCHER_ENVIRONMENT}"
 
     if rancher -w up --force-upgrade --confirm-upgrade -d --stack "${RANCHER_STACK_NAME}"; then
       DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
