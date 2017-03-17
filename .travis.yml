@@ -3,13 +3,6 @@ sudo: required
 services:
   - docker
 
-env:
-  global:
-  - DOCKER_REPO=nhsuk/${REPLACEME}
-  - DOCKER_USERNAME=nhsukautomata
-  - RANCHER_TEMPLATE_NAME=${REPLACEME}
-  - RANCHER_URL=${URL-https://rancher.nhschoices.net}
-
 after_success:
   - pip install pyaml
   - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
