@@ -41,23 +41,21 @@ get_repo_name() {
   echo "${REPO}"
 }
 
-install_rancher() {
+rancher() {
   declare -r RANCHER_CLI_VERSION='v0.6.0-rc2'
-  mkdir tmp bin
-  wget -qO- https://github.com/rancher/cli/releases/download/${RANCHER_CLI_VERSION}/rancher-linux-amd64-${RANCHER_CLI_VERSION}.tar.gz | tar xvz -C tmp
-  mv tmp/rancher-${RANCHER_CLI_VERSION}/rancher bin/rancher
-  chmod +x bin/rancher
-  rm -r tmp/rancher-${RANCHER_CLI_VERSION}
-  PATH=$PATH:./bin
+
+  docker run \
+    --rm \
+    -e RANCHER_URL="${RANCHER_URL}" \
+    -e RANCHER_ENVIRONMENT="${RANCHER_ENVIRONMENT}" \
+    -e RANCHER_ACCESS_KEY="${RANCHER_ACCESS_KEY}" \
+    -e RANCHER_SECRET_KEY="${RANCHER_SECRET_KEY}" \
+    -v "$(pwd)":/mnt \
+    rancher/cli:${RANCHER_CLI_VERSION} \
+    $@
 }
 
 if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
-
-  fold_start "Install_Rancher"
-  if [ ! "$(command -v rancher)" ]; then
-    install_rancher
-  fi
-  fold_end "Install_Rancher"
 
   fold_start "Generate_answers.txt"
   # POPULATES ANSWERS FILE WITH THE DEFAULTS FROM THE RANCHER-COMPOSE FILE
