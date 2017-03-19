@@ -55,6 +55,10 @@ rancher() {
     $@
 }
 
+yml2json() {
+  echo "$@" | docker run -a python:alpine -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)'
+}
+
 if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
 
   fold_start "Generate_answers.txt"
@@ -62,7 +66,7 @@ if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
   RANCHER_CATALOG_ID=$( curl -su "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" "${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_NAME}:${RANCHER_TEMPLATE_NAME}" | jq --raw-output '.defaultTemplateVersionId' )
   curl -su "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" "${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_ID}" | \
   jq --raw-output '.files["rancher-compose.yml"]' | \
-    python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)' | \
+    yml2json | \
     jq --raw-output '.catalog.questions[] | @text "\(.variable)=\(.default)"' > answers.txt
 
   REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
