@@ -11,7 +11,9 @@ set -e
 #prevents errors in a pipeline from being masked
 set -o pipefail
 
-declare -r NHSUK_GITHUB_URL="https://api.github.com/repos/nhsuk"
+declare -r RANCHER_SERVER="https://rancher.nhschoices.net"
+declare -r RANCHER_CATALOG_NAME="NHSuk_Staging"
+declare -r RANCHER_URL="${RANCHER_SERVER}/v2-beta/schemas"
 
 fold_start() {
   if [[ -n $TRAVIS ]]; then
@@ -23,18 +25,6 @@ fold_end() {
   if [[ -n $TRAVIS ]]; then
     printf "%s\n" "travis_fold:end:$*"
   fi
-}
-
-find_latest_rancher_template() {
-
-  declare -r TEMPLATE_URL_BASE=$1
-  declare TEMPLATE_VERSION; TEMPLATE_VERSION=0
-
-  until [ "$(get_http_response "${TEMPLATE_URL_BASE}/${TEMPLATE_VERSION}/docker-compose.yml")" != "200" ]; do
-    TEMPLATE_VERSION=$((TEMPLATE_VERSION + 1))
-  done
-
-  echo $((TEMPLATE_VERSION - 1))
 }
 
 sanitise_repo_name() {
@@ -50,114 +40,77 @@ get_repo_name() {
   echo "${REPO}"
 }
 
-get_http_response() {
-  declare -r URL=$1
-  #Check file exists
-  declare RESPONSE; RESPONSE=$(curl -IsS -o /dev/null -w '%{http_code}' "${URL}")
-  echo "$RESPONSE"
+rancher() {
+  declare -r RANCHER_CLI_VERSION='v0.6.0-rc2'
+
+  docker run \
+    --rm \
+    -e RANCHER_URL="${RANCHER_URL}" \
+    -e RANCHER_ENVIRONMENT="${RANCHER_ENVIRONMENT}" \
+    -e RANCHER_ACCESS_KEY="${RANCHER_ACCESS_KEY}" \
+    -e RANCHER_SECRET_KEY="${RANCHER_SECRET_KEY}" \
+    -v "$(pwd)":/mnt \
+    rancher/cli:${RANCHER_CLI_VERSION} \
+    "$@"
 }
 
-create_compose_file() {
-  declare -r COMPOSE_TYPE=$1
-  declare -r FILENAME="${COMPOSE_TYPE}-compose.yml"
-  declare -r TEMPLATE_URL_BASE="https://raw.githubusercontent.com/nhsuk/nhsuk-rancher-templates/${RANCHER_TEMPLATE_BRANCH_NAME:-master}/templates/${RANCHER_TEMPLATE_NAME}"
+post_comment_to_github() {
+ 
+  declare -r MSG=$1
+  declare -r PULL_REQUEST=$2
+  declare -r REPO_SLUG=$3
 
-  TEMPLATE_VERSION=$(find_latest_rancher_template "${TEMPLATE_URL_BASE}")
-  declare -r TEMPLATE_URL="${TEMPLATE_URL_BASE}/${TEMPLATE_VERSION}/${COMPOSE_TYPE}-compose.yml"
+  fold_start "Post_To_Github"
 
+  PAYLOAD="{\"body\": \"${MSG}\" }"
 
-  declare RESPONSE; RESPONSE=$(get_http_response "${TEMPLATE_URL}")
+  GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
 
-  if [ "${RESPONSE}" = "200" ]; then
-    curl -Ss "${TEMPLATE_URL}"  -o "${FILENAME}"
+  if [ "${GITHUB_RESPONSE}" = "201" ]; then
+    echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
   else
-    echo "Failed to get ${TEMPLATE_URL} (response code: ${RESPONSE})" >&2
+    echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+  fi
+
+  fold_end "Post_To_Github"
+}
+
+if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
+
+  fold_start "Generate_answers.txt"
+  # POPULATES ANSWERS FILE WITH THE DEFAULTS FROM THE RANCHER-COMPOSE FILE
+  RANCHER_CATALOG_ID=$( curl -su "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" "${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_NAME}:${RANCHER_TEMPLATE_NAME}" | jq --raw-output '.defaultTemplateVersionId' )
+  curl -su "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" "${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_ID}" | \
+    jq --raw-output '.questions[] | @text "\(.variable)=\(.default)"' > answers.txt
+
+  REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
+  SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
+
+  echo "${SANITISED_REPO_NAME}_DOCKER_IMAGE_TAG=pr-${TRAVIS_PULL_REQUEST}" >> answers.txt
+
+  fold_end "Generate_answers.txt"
+
+  RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
+
+  echo -e "\nBuilding rancher stack ${RANCHER_STACK_NAME} in environment ${RANCHER_ENVIRONMENT}\n"
+
+  fold_start "Rancher_Up"
+
+  # REMOVE STACK IF PRESENT
+  if rancher stack ls | grep "${RANCHER_STACK_NAME}"; then
+    rancher rm --stop --type stack "${RANCHER_STACK_NAME}"
+  fi
+
+  if rancher catalog install --answers answers.txt --name "${RANCHER_STACK_NAME}" "${RANCHER_CATALOG_NAME}"/"${RANCHER_TEMPLATE_NAME}"; then
+    DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
+    MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
+    post_comment_to_github "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
+  else
+    MSG=":warning: deployment of ${TRAVIS_PULL_REQUEST} for ${TRAVIS_REPO_SLUG} to rancher stack ${RANCHER_STACK_NAME} failed"
+    post_comment_to_github "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
     exit 1
   fi
 
-  echo -e "\n${FILENAME}\n"; cat "${FILENAME}"
-}
-
-check_repo_exists() {
-  declare -r REPO=$1
-  declare -r URL="${NHSUK_GITHUB_URL}/${REPO}"
-  declare RESPONSE; RESPONSE=$(get_http_response "${URL}")
-
-  if [ "${RESPONSE}" != "200" ]; then
-    echo "Could not access GitHub repo '${REPO}'. Check it exists and is public. (url: ${URL}, response code: ${RESPONSE})." >&2
-    exit 1
-  fi
-}
-
-get_latest_release() {
-  declare -r REPO=$1
-  declare -r URL="${NHSUK_GITHUB_URL}/${REPO}"
-
-  LATEST_RELEASE=$(curl -s "${URL}/releases/latest" | jq -r '.tag_name')
-
-  if [ "${LATEST_RELEASE}" == "null" ]; then
-    echo "GitHub repo '${REPO}' does not have a latest release. (url: ${URL})." >&2
-    exit 1
-  fi
-
-  echo "$LATEST_RELEASE"
-}
-
-install_rancher() {
-  declare -r RANCHER_CLI_VERSION='v0.4.1'
-  mkdir tmp bin
-  wget -qO- https://github.com/rancher/cli/releases/download/${RANCHER_CLI_VERSION}/rancher-linux-amd64-${RANCHER_CLI_VERSION}.tar.gz | tar xvz -C tmp
-  mv tmp/rancher-${RANCHER_CLI_VERSION}/rancher bin/rancher
-  chmod +x bin/rancher
-  rm -r tmp/rancher-${RANCHER_CLI_VERSION}
-  PATH=$PATH:./bin
-}
-
-if [ "$TRAVIS" == true ]; then
-
-  if [ "$TRAVIS_PULL_REQUEST" != false ]; then
-
-    if [ ! "$(command -v rancher)" ]; then
-      install_rancher
-    fi
-
-    fold_start "Getting compose files"
-
-    create_compose_file "docker"
-    create_compose_file "rancher"
-
-    fold_end "Getting compose files"
-
-    eval "$(python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)' < rancher-compose.yml | jq --raw-output '.catalog.questions[] | select(.variable != "gp_finder_docker_image_tag" and .default != null) | @text "export \(.variable)=\(.default)"')"
-
-    REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
-    SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
-
-    eval "export ${SANITISED_REPO_NAME}_DOCKER_IMAGE_TAG=pr-${TRAVIS_PULL_REQUEST}"
-
-    RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
-
-    echo -e "\nBuilding rancher stack ${RANCHER_STACK_NAME} in environment ${RANCHER_ENVIRONMENT}\n"
-
-    fold_start "Rancher up"
-    if rancher -w up --force-upgrade --confirm-upgrade -d --stack "${RANCHER_STACK_NAME}"; then
-      DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
-      MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
-    else
-      MSG=":warning: deployment of ${TRAVIS_PULL_REQUEST} for ${TRAVIS_REPO_SLUG} failed"
-    fi
-    fold_end "Rancher up"
-
-    PAYLOAD="{\"body\": \"${MSG}\" }"
-
-    GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
-
-    if [ "${GITHUB_RESPONSE}" = "201" ]; then
-      echo "Comment '${MSG}' added to pr ${TRAVIS_PULL_REQUEST} on ${TRAVIS_REPO_SLUG}"
-    else
-      echo "Failed to add comment to pr ${TRAVIS_PULL_REQUEST} on ${TRAVIS_REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
-    fi
-
-  fi
+  fold_end "Rancher_Up"
 
 fi
