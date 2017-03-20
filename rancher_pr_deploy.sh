@@ -12,7 +12,6 @@ set -e
 set -o pipefail
 
 declare -r RANCHER_SERVER="https://rancher.nhschoices.net"
-declare -r NHSUK_GITHUB_URL="https://api.github.com/repos/nhsuk"
 declare -r RANCHER_CATALOG_NAME="NHSuk_Staging"
 declare -r RANCHER_URL="${RANCHER_SERVER}/v2-beta/schemas"
 
@@ -52,7 +51,28 @@ rancher() {
     -e RANCHER_SECRET_KEY="${RANCHER_SECRET_KEY}" \
     -v "$(pwd)":/mnt \
     rancher/cli:${RANCHER_CLI_VERSION} \
-    $@
+    "$@"
+}
+
+post_comment_to_github() {
+ 
+  declare -r MSG=$1
+  declare -r PULL_REQUEST=$2
+  declare -r REPO_SLUG=$3
+
+  fold_start "Post_To_Github"
+
+  PAYLOAD="{\"body\": \"${MSG}\" }"
+
+  GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
+
+  if [ "${GITHUB_RESPONSE}" = "201" ]; then
+    echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
+  else
+    echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+  fi
+
+  fold_end "Post_To_Github"
 }
 
 if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
@@ -84,22 +104,13 @@ if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
   if rancher catalog install --answers answers.txt --name "${RANCHER_STACK_NAME}" "${RANCHER_CATALOG_NAME}"/"${RANCHER_TEMPLATE_NAME}"; then
     DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
     MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
+    post_comment_to_github "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
   else
-    MSG=":warning: deployment of ${TRAVIS_PULL_REQUEST} for ${TRAVIS_REPO_SLUG} failed"
+    MSG=":warning: deployment of ${TRAVIS_PULL_REQUEST} for ${TRAVIS_REPO_SLUG} to rancher stack ${RANCHER_STACK_NAME} failed"
+    post_comment_to_github "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
+    exit 1
   fi
+
   fold_end "Rancher_Up"
-
-
-  fold_start "Post_To_Github"
-  PAYLOAD="{\"body\": \"${MSG}\" }"
-
-  GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/issues/${TRAVIS_PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
-
-  if [ "${GITHUB_RESPONSE}" = "201" ]; then
-    echo "Comment '${MSG}' added to pr ${TRAVIS_PULL_REQUEST} on ${TRAVIS_REPO_SLUG}"
-  else
-    echo "Failed to add comment to pr ${TRAVIS_PULL_REQUEST} on ${TRAVIS_REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
-  fi
-  fold_end "Post_To_Github"
 
 fi
