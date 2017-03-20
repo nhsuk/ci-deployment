@@ -54,11 +54,7 @@ rancher() {
     "$@"
 }
 
-yml2json() {
-  docker run -a python:alpine -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)'
-}
-
-post_comment() {
+post_comment_to_github() {
  
   declare -r MSG=$1
   declare -r PULL_REQUEST=$2
@@ -85,9 +81,7 @@ if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
   # POPULATES ANSWERS FILE WITH THE DEFAULTS FROM THE RANCHER-COMPOSE FILE
   RANCHER_CATALOG_ID=$( curl -su "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" "${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_NAME}:${RANCHER_TEMPLATE_NAME}" | jq --raw-output '.defaultTemplateVersionId' )
   curl -su "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" "${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_ID}" | \
-  jq --raw-output '.files["rancher-compose.yml"]' | \
-    yml2json | \
-    jq --raw-output '.catalog.questions[] | @text "\(.variable)=\(.default)"' > answers.txt
+    jq --raw-output '.questions[] | @text "\(.variable)=\(.default)"' > answers.txt
 
   REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
   SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
@@ -110,10 +104,10 @@ if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
   if rancher catalog install --answers answers.txt --name "${RANCHER_STACK_NAME}" "${RANCHER_CATALOG_NAME}"/"${RANCHER_TEMPLATE_NAME}"; then
     DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
     MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
-    post_comment "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
+    post_comment_to_github "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
   else
     MSG=":warning: deployment of ${TRAVIS_PULL_REQUEST} for ${TRAVIS_REPO_SLUG} to rancher stack ${RANCHER_STACK_NAME} failed"
-    post_comment "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
+    post_comment_to_github "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
     exit 1
   fi
 
