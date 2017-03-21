@@ -7,7 +7,7 @@ The scripts should work across a number of repos that include a `Dockerfile`. Th
 Including this repo within your own (as detailed below) will:
 * Build and tag the Docker image as detailed in the repo's `Dockerfile`. This happens on PR creation/update, tagging (including releases), and commits to the `master` branch
 * Push the image to the appropriate docker repo
-* If the Travis build has been triggered by a PR a new stack will be created within the `RANCHER_ENVIRONMENT` in Rancher. The rancher and docker templates used to build the stack are pulled from the [nhsuk/nhsuk-rancher-templates](https://github.com/nhsuk/nhsuk-rancher-templates) repo on GitHub. The specific compose files are determined by `RANCHER_TEMPLATE_NAME` and the latest subdirectory (i.e. the highest numbered). This is the convention used by rancher catalogs to implement template versioning.
+* If the Travis build has been triggered by a PR a new stack will be created within the `RANCHER_ENVIRONMENT` on the Rancher server based on the rancher template defined by RANCHER_TEMPLATE_NAME. The templates are defined in the Github repo [nhsuk/nhsuk-rancher-templates](https://github.com/nhsuk/nhsuk-rancher-templates).
 * Image tag variable names in the rancher-compose.yml file should conform to a naming convention ({modified repo name}_DOCKER_IMAGE_TAG where {modified repo name} is the repo name in upper case with hyphens replaced by underscores e.g. GP_FINDER_DOCKER_IMAGE_TAG for the repo gp-finder). This allows the image tag for the current repo being built to be set to PR-_n_ whilst all other image tags are set the default value in rancher compose.
 * A publicly accessible URL to the stack will be published as a comment on the PR.
 
