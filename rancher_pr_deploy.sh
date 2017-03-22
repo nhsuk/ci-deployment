@@ -78,8 +78,15 @@ post_comment_to_github() {
 if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
 
   fold_start "Generate_answers.txt"
-  # POPULATES ANSWERS FILE WITH THE DEFAULTS FROM THE RANCHER-COMPOSE FILE
+
   RANCHER_CATALOG_ID=$( curl -su "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" "${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_NAME}:${RANCHER_TEMPLATE_NAME}" | jq --raw-output '.defaultTemplateVersionId' )
+
+  if [ -z "${RANCHER_CATALOG_ID}" ]; then
+    echo "Rancher Catalog Id (aka defaultTemplateVersionId) from ${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_NAME}:${RANCHER_TEMPLATE_NAME} is unknown."
+    echo "Make sure it is defined in config.yml and that it matches the latest one is used in the template directories."
+    exit 1
+  fi
+
   curl -su "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" "${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_ID}" | \
     jq --raw-output '.questions[] | @text "\(.variable)=\(.default)"' > answers.txt
 
