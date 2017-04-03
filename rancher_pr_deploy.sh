@@ -55,27 +55,31 @@ rancher() {
 }
 
 post_comment_to_github() {
- 
+
   declare -r MSG=$1
   declare -r PULL_REQUEST=$2
   declare -r REPO_SLUG=$3
 
-  fold_start "Post_To_Github"
+  if [ "$TRAVIS_PULL_REQUEST" != false ] ; then
 
-  PAYLOAD="{\"body\": \"${MSG}\" }"
+    fold_start "Post_To_Github"
 
-  GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
+    PAYLOAD="{\"body\": \"${MSG}\" }"
 
-  if [ "${GITHUB_RESPONSE}" = "201" ]; then
-    echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
-  else
-    echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+    GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
+
+    if [ "${GITHUB_RESPONSE}" = "201" ]; then
+      echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
+    else
+      echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+    fi
+
+    fold_end "Post_To_Github"
+
   fi
-
-  fold_end "Post_To_Github"
 }
 
-if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
+deploy() {
 
   fold_start "Generate_answers.txt"
 
@@ -93,11 +97,9 @@ if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
   REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
   SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
 
-  echo "${SANITISED_REPO_NAME}_DOCKER_IMAGE_TAG=pr-${TRAVIS_PULL_REQUEST}" >> answers.txt
+  echo "${SANITISED_REPO_NAME}_DOCKER_IMAGE_TAG=${IMAGE_TAG}" >> answers.txt
 
   fold_end "Generate_answers.txt"
-
-  RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
 
   echo -e "\nBuilding rancher stack ${RANCHER_STACK_NAME} in environment ${RANCHER_ENVIRONMENT}\n"
 
@@ -119,5 +121,17 @@ if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
   fi
 
   fold_end "Rancher_Up"
+}
 
+
+REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
+
+if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
+  RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
+  IMAGE_TAG="pr-${TRAVIS_PULL_REQUEST}"
+  deploy
+elif [ "$TRAVIS_BRANCH" == "master" ]; then
+  RANCHER_STACK_NAME="${REPO_NAME}-latest"
+  IMAGE_TAG="latest"
+  deploy
 fi
