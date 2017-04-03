@@ -55,7 +55,7 @@ rancher() {
 }
 
 post_comment_to_github() {
- 
+
   declare -r MSG=$1
   declare -r PULL_REQUEST=$2
   declare -r REPO_SLUG=$3
@@ -75,7 +75,7 @@ post_comment_to_github() {
   fold_end "Post_To_Github"
 }
 
-if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
+deploy() {
 
   fold_start "Generate_answers.txt"
 
@@ -93,11 +93,9 @@ if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
   REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
   SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
 
-  echo "${SANITISED_REPO_NAME}_DOCKER_IMAGE_TAG=pr-${TRAVIS_PULL_REQUEST}" >> answers.txt
+  echo "${SANITISED_REPO_NAME}_DOCKER_IMAGE_TAG=${IMAGE_TAG}" >> answers.txt
 
   fold_end "Generate_answers.txt"
-
-  RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
 
   echo -e "\nBuilding rancher stack ${RANCHER_STACK_NAME} in environment ${RANCHER_ENVIRONMENT}\n"
 
@@ -119,5 +117,15 @@ if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
   fi
 
   fold_end "Rancher_Up"
+}
 
+
+if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
+  RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
+  IMAGE_TAG="pr-${TRAVIS_PULL_REQUEST}"
+  deploy
+else if [ "$TRAVIS_BRANCH" == "master" ]; then
+  RANCHER_STACK_NAME="latest"
+  IMAGE_TAG="latest"
+  deploy
 fi
