@@ -11,6 +11,8 @@ set -e
 #prevents errors in a pipeline from being masked
 set -o pipefail
 
+declare SLACK_TOKEN
+declare GITHUB_ACCESS_TOKEN
 declare -r RANCHER_SERVER="https://rancher.nhschoices.net"
 declare -r RANCHER_CATALOG_NAME="NHSuk_Staging"
 declare -r RANCHER_URL="${RANCHER_SERVER}/v2-beta/schemas"
@@ -76,14 +78,18 @@ github_commenter() {
 
   fold_start "Post_To_Github"
 
-  PAYLOAD="{\"body\": \"${MSG}\" }"
+  if [ -n "$GITHUB_ACCESS_TOKEN" ]; then
+    PAYLOAD="{\"body\": \"${MSG}\" }"
 
-  GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
+    GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
 
-  if [ "${GITHUB_RESPONSE}" = "201" ]; then
-    echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
+    if [ "${GITHUB_RESPONSE}" = "201" ]; then
+      echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
+    else
+      echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+    fi
   else
-    echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+    echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (GITHUB_ACCESS_TOKEN not set)"
   fi
 
   fold_end "Post_To_Github"
@@ -94,14 +100,18 @@ slack_commenter() {
 
   declare -r MSG="$1"
 
-  SLACK_RESPONSE=$(curl -s --data-urlencode "text=$MSG" "https://slack.com/api/chat.postMessage?token=${SLACK_TOKEN}&channel=${SLACK_CHANNEL_ID}")
+  if [ -n "$SLACK_TOKEN" ]; then
+    SLACK_RESPONSE=$(curl -s --data-urlencode "text=$MSG" "https://slack.com/api/chat.postMessage?token=${SLACK_TOKEN}&channel=${SLACK_CHANNEL_ID}")
 
-  fold_start "Post_To_Slack"
+    fold_start "Post_To_Slack"
 
-  if [ "$(jq '.ok' <<< "${SLACK_RESPONSE}")" == "true" ]; then
-    echo "Comment '${MSG}' posted to slack channel ${SLACK_CHANNEL_ID}"
+    if [ "$(jq '.ok' <<< "${SLACK_RESPONSE}")" == "true" ]; then
+      echo "Comment '${MSG}' posted to slack channel ${SLACK_CHANNEL_ID}"
+    else
+      echo "Failed to post comment '${MSG}' slack channel ${SLACK_CHANNEL_ID} (${SLACK_RESPONSE})"
+    fi
   else
-    echo "Failed to post comment '${MSG}' slack channel ${SLACK_CHANNEL_ID} (${SLACK_RESPONSE})"
+    echo "Failed to post comment to slack (SLACK_TOKEN not set)"
   fi
 
   fold_end "Post_To_Slack"
