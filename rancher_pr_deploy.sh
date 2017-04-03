@@ -54,34 +54,70 @@ rancher() {
     "$@"
 }
 
-post_comment_to_github() {
+get_message() {
 
-  declare -r MSG=$1
-  declare -r PULL_REQUEST=$2
-  declare -r REPO_SLUG=$3
+  declare -r STATUS=$1
+  declare -r DEPLOYMENT=$2
+  declare -r DEPLOY_URL=$3
 
-  if [ "$TRAVIS_PULL_REQUEST" != false ] ; then
-
-    fold_start "Post_To_Github"
-
-    PAYLOAD="{\"body\": \"${MSG}\" }"
-
-    GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
-
-    if [ "${GITHUB_RESPONSE}" = "201" ]; then
-      echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
-    else
-      echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
-    fi
-
-    fold_end "Post_To_Github"
-
+  if [ "$STATUS" == "succeeded" ]; then
+    echo ":rocket: deployment of $DEPLOYMENT $STATUS ($DEPLOY_URL)"
+  else
+    echo ":warning: deployment of $DEPLOYMENT $STATUS"
   fi
+
+}
+
+github_commenter() {
+
+  declare -r MSG="$1"
+  declare -r PULL_REQUEST="$TRAVIS_PULL_REQUEST"
+  declare -r REPO_SLUG="$TRAVIS_REPO_SLUG"
+
+  fold_start "Post_To_Github"
+
+  PAYLOAD="{\"body\": \"${MSG}\" }"
+
+  GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
+
+  if [ "${GITHUB_RESPONSE}" = "201" ]; then
+    echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
+  else
+    echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+  fi
+
+  fold_end "Post_To_Github"
+
+}
+
+slack_commenter() {
+
+  declare -r MSG="$1"
+
+  SLACK_RESPONSE=$(curl -s --data-urlencode "text=$MSG" "https://slack.com/api/chat.postMessage?token=${SLACK_TOKEN}&channel=${SLACK_CHANNEL_ID}")
+
+  fold_start "Post_To_Slack"
+
+  if [ "$(jq '.ok' <<< "${SLACK_RESPONSE}")" == "true" ]; then
+    echo "Comment '${MSG}' posted to slack channel ${SLACK_CHANNEL_ID}"
+  else
+    echo "Failed to post comment '${MSG}' slack channel ${SLACK_CHANNEL_ID} (${SLACK_RESPONSE})"
+  fi
+
+  fold_end "Post_To_Slack"
+
 }
 
 deploy() {
 
+  declare -r IMAGE_TAG=$1
+  declare -r COMMENTER=$2
+  declare REPO_NAME
+  declare SANITISED_REPO_NAME
+
   fold_start "Generate_answers.txt"
+
+  echo "Rancher values: server=${RANCHER_SERVER} catalog=${RANCHER_CATALOG_NAME} template=${RANCHER_TEMPLATE_NAME}"
 
   RANCHER_CATALOG_ID=$( curl -su "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" "${RANCHER_SERVER}/v1-catalog/templates/${RANCHER_CATALOG_NAME}:${RANCHER_TEMPLATE_NAME}" | jq --raw-output '.defaultTemplateVersionId' )
 
@@ -96,6 +132,7 @@ deploy() {
 
   REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
   SANITISED_REPO_NAME=$(sanitise_repo_name "${REPO_NAME}")
+  declare -r RANCHER_STACK_NAME="${REPO_NAME}-${IMAGE_TAG}"
 
   echo "${SANITISED_REPO_NAME}_DOCKER_IMAGE_TAG=${IMAGE_TAG}" >> answers.txt
 
@@ -110,28 +147,21 @@ deploy() {
     rancher rm --stop --type stack "${RANCHER_STACK_NAME}"
   fi
 
-  if rancher catalog install --answers answers.txt --name "${RANCHER_STACK_NAME}" "${RANCHER_CATALOG_NAME}"/"${RANCHER_TEMPLATE_NAME}"; then
-    DEPLOY_URL="http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net"
-    MSG=":rocket: deployed to [${DEPLOY_URL}](${DEPLOY_URL})"
-    post_comment_to_github "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
+  if rancher --wait catalog install --answers answers.txt --name "${RANCHER_STACK_NAME}" "${RANCHER_CATALOG_NAME}"/"${RANCHER_TEMPLATE_NAME}"; then
+    MSG="$(get_message "succeeded" "${RANCHER_STACK_NAME} in ${RANCHER_ENVIRONMENT}" "http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net")"
+    eval "$COMMENTER \"$MSG\""
   else
-    MSG=":warning: deployment of ${TRAVIS_PULL_REQUEST} for ${TRAVIS_REPO_SLUG} to rancher stack ${RANCHER_STACK_NAME} failed"
-    post_comment_to_github "$MSG" "$TRAVIS_PULL_REQUEST" "$TRAVIS_REPO_SLUG"
+    MSG="$(get_message "failed" "${RANCHER_STACK_NAME} in ${RANCHER_ENVIRONMENT}")"
+    eval "$COMMENTER \"$MSG\""
     exit 1
   fi
 
   fold_end "Rancher_Up"
+
 }
 
-
-REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
-
-if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
-  RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
-  IMAGE_TAG="pr-${TRAVIS_PULL_REQUEST}"
-  deploy
+if [ "$TRAVIS_PULL_REQUEST" != false ] ; then
+  deploy "pr-${TRAVIS_PULL_REQUEST}" "github_commenter"
 elif [ "$TRAVIS_BRANCH" == "master" ]; then
-  RANCHER_STACK_NAME="${REPO_NAME}-latest"
-  IMAGE_TAG="latest"
-  deploy
+  deploy "latest" "slack_commenter"
 fi
