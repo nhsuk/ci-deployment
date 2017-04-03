@@ -60,19 +60,23 @@ post_comment_to_github() {
   declare -r PULL_REQUEST=$2
   declare -r REPO_SLUG=$3
 
-  fold_start "Post_To_Github"
+  if [ "$TRAVIS_PULL_REQUEST" != false ] ; then
 
-  PAYLOAD="{\"body\": \"${MSG}\" }"
+    fold_start "Post_To_Github"
 
-  GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
+    PAYLOAD="{\"body\": \"${MSG}\" }"
 
-  if [ "${GITHUB_RESPONSE}" = "201" ]; then
-    echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
-  else
-    echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+    GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO_SLUG}/issues/${PULL_REQUEST}/comments?access_token=${GITHUB_ACCESS_TOKEN}")
+
+    if [ "${GITHUB_RESPONSE}" = "201" ]; then
+      echo "Comment '${MSG}' added to pr ${PULL_REQUEST} on ${REPO_SLUG}"
+    else
+      echo "Failed to add comment to pr ${PULL_REQUEST} on ${REPO_SLUG} (response code: \"${GITHUB_RESPONSE}\")"
+    fi
+
+    fold_end "Post_To_Github"
+
   fi
-
-  fold_end "Post_To_Github"
 }
 
 deploy() {
