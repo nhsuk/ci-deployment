@@ -120,12 +120,14 @@ deploy() {
 }
 
 
+REPO_NAME=$(get_repo_name "${TRAVIS_REPO_SLUG}")
+
 if [ "$TRAVIS" == true ] && [ "$TRAVIS_PULL_REQUEST" != false ] ; then
   RANCHER_STACK_NAME="${REPO_NAME}-pr-${TRAVIS_PULL_REQUEST}"
   IMAGE_TAG="pr-${TRAVIS_PULL_REQUEST}"
   deploy
-else if [ "$TRAVIS_BRANCH" == "master" ]; then
-  RANCHER_STACK_NAME="latest"
+elif [ "$TRAVIS_BRANCH" == "master" ]; then
+  RANCHER_STACK_NAME="${REPO_NAME}-latest"
   IMAGE_TAG="latest"
   deploy
 fi
