@@ -158,7 +158,7 @@ deploy() {
   fi
 
   if rancher --wait catalog install --answers answers.txt --name "${RANCHER_STACK_NAME}" "${RANCHER_CATALOG_NAME}"/"${RANCHER_TEMPLATE_NAME}"; then
-    MSG="$(get_message "succeeded" "${RANCHER_STACK_NAME} in ${RANCHER_ENVIRONMENT}" "http://${RANCHER_STACK_NAME}.dev.c2s.nhschoices.net")"
+    MSG="$(get_message "succeeded" "${RANCHER_STACK_NAME} in ${RANCHER_ENVIRONMENT}" "http://${RANCHER_STACK_NAME}.dev.beta.nhschoices.net")"
     eval "$COMMENTER \"$MSG\""
   else
     MSG="$(get_message "failed" "${RANCHER_STACK_NAME} in ${RANCHER_ENVIRONMENT}")"
