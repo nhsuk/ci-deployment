@@ -50,3 +50,4 @@ It is worth noting that it is possible to run the PR script locally by setting t
  `TRAVIS=true TRAVIS_REPO_SLUG=nhsuk/connecting-to-services TRAVIS_PULL_REQUEST=<PR number of an image which still exists>  RANCHER_TEMPLATE_NAME=c2s-pharmacy-finder SPLUNK_HEC_TOKEN=<splunk token> GITHUB_ACCESS_TOKEN=<personal access token> RANCHER_ENVIRONMENT=<rancher env name> ./rancher_pr_deploy.sh`
 
  If testing changes to the rancher template during development  RANCHER_TEMPLATE_BRANCH_NAME can also be set (see above for details).
+g

@@ -1,10 +1,13 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
+get_repo_name() {
+  echo "$TRAVIS_REPO_SLUG" | cut -d "/" -f 2-
+}
 
 PUSH_TO_DOCKER=true
-DOCKER_REPO=$DOCKER_REPO
+REPO_SLUG=$(get_repo_name)
+DOCKER_REPO="nhsuk/${REPO_SLUG}"
 TAGS=""
-TEMP_IMAGE_NAME="temp_nhsuk_docker_image"
-DOCKERFILE="Dockerfile"
 
 info() {
   printf "%s\n" "$@"
@@ -29,6 +32,7 @@ fold_end() {
   fi
 }
 
+
 # CREATE ARRAY OF DOCKER TAGS WE'RE GOING TO APPLY TO THE IMAGE
 
 # IF PULL REQUEST BUILD, CREATE TAG FOR PR
@@ -52,12 +56,6 @@ elif [[ -n "$TRAVIS" ]]; then
     TAGS="$TAGS $TRAVIS_TAG"
   fi
 
-else
-  currentBranch=$(git rev-parse --abbrev-ref HEAD )
-  TAGS="${TAGS} $currentBranch"
-  if [ "$currentBranch" == "master" ]; then
-    TAGS="${TAGS} latest master"
-  fi
 fi
 
 echo "$TAGS"
@@ -65,11 +63,25 @@ echo "$TAGS"
 if [[ "$TAGS" != "" ]]; then
   fold_start "Building Docker Images"
 
+  # LOGIN TO DOCKER HUB
+  fold_start "Login to Docker hub"
+  if [ -z "$DOCKER_USERNAME" ]; then
+    echo "DOCKER_USERNAME not set"
+    exit 1
+  fi
+  if [ -z "$DOCKER_PASSWORD" ]; then
+    echo "DOCKER_PASSWORD not set"
+    exit 1
+  fi
+  docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  fold_end "Login to Docker hub"
+
+
   fold_start "Building Default Image"
   info "Building default image"
-  docker build -t ${TEMP_IMAGE_NAME} -f $DOCKERFILE .
+  docker build -t ${REPO_SLUG} .
 
-  if [[ $(docker build -t ${TEMP_IMAGE_NAME} -f $DOCKERFILE . ) -gt 0 ]]; then
+  if [[ $(docker build -t ${REPO_SLUG} . ) -gt 0 ]]; then
     fatal "Build failed!"
   else
     info "Build succeeded."
@@ -81,7 +93,7 @@ if [[ "$TAGS" != "" ]]; then
 
     for TAG in $TAGS; do
       fold_start "Tagging '$TAG' and pushing to docker hub"
-      docker tag "$TEMP_IMAGE_NAME" "${DOCKER_REPO}:${TAG}"
+      docker tag "$REPO_SLUG" "${DOCKER_REPO}:${TAG}"
       docker push "${DOCKER_REPO}:${TAG}"
       fold_end "Tagging '$TAG' and pushing to docker hub"
     done

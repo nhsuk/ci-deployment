@@ -34,11 +34,11 @@ displayMessage() {
 }
 
 
-public_values="DOCKER_REPO RANCHER_URL RANCHER_ENVIRONMENT RANCHER_TEMPLATE_NAME RANCHER_ACCESS_KEY"
-private_values="DOCKER_USERNAME DOCKER_PASSWORD GITHUB_ACCESS_TOKEN SPLUNK_HEC_TOKEN RANCHER_SECRET_KEY"
+public_values="DOCKER_USERNAME RANCHER_SERVER RANCHER_ENVIRONMENT RANCHER_ACCESS_KEY"
+private_values="DOCKER_PASSWORD GITHUB_ACCESS_TOKEN RANCHER_SECRET_KEY"
 
 printf "${mag}The current environment variables are:${end}\n\n"
-travis env list 
+travis env list
 
 displayMessage "Private"
 for i in $private_values
