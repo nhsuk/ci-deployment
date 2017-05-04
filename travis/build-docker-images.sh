@@ -1,11 +1,7 @@
 #!/bin/bash
 
-get_repo_name() {
-  echo "$TRAVIS_REPO_SLUG" | cut -d "/" -f 2-
-}
-
 PUSH_TO_DOCKER=true
-REPO_SLUG=$(get_repo_name)
+REPO_SLUG=$(sh ./scripts/ci-deployment/travis/get-repo-name.sh)
 DOCKER_REPO="nhsuk/${REPO_SLUG}"
 TAGS=""
 
@@ -21,13 +17,13 @@ fatal() {
 }
 
 fold_start() {
-  if [[ -n $TRAVIS ]]; then
+  if [ -n $TRAVIS ]; then
     printf "%s\n" "travis_fold:start:$*"
   fi
 }
 
 fold_end() {
-  if [[ -n $TRAVIS ]]; then
+  if [ -n $TRAVIS ]; then
     printf "%s\n" "travis_fold:end:$*"
   fi
 }
@@ -41,7 +37,7 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
   echo "Pull Request build detected, adding pr-${TRAVIS_PULL_REQUEST} to the docker tags"
   TAGS="$TAGS pr-${TRAVIS_PULL_REQUEST}"
 
-elif [[ -n "$TRAVIS" ]]; then
+elif [ -n "$TRAVIS" ]; then
 
   echo "Travis detected"
 
@@ -58,13 +54,14 @@ elif [[ -n "$TRAVIS" ]]; then
 
 fi
 
-echo "$TAGS"
+if [ "$TAGS" != "" ]; then
 
-if [[ "$TAGS" != "" ]]; then
-  fold_start "Building Docker Images"
+  echo "Building Docker tags: $TAGS"
+
+  fold_start "Building_Docker_Images"
 
   # LOGIN TO DOCKER HUB
-  fold_start "Login to Docker hub"
+  fold_start "Login_to_Docker_hub"
   if [ -z "$DOCKER_USERNAME" ]; then
     echo "DOCKER_USERNAME not set"
     exit 1
@@ -74,31 +71,30 @@ if [[ "$TAGS" != "" ]]; then
     exit 1
   fi
   docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-  fold_end "Login to Docker hub"
+  fold_end "Login_to_Docker_hub"
 
 
-  fold_start "Building Default Image"
+  fold_start "Building_Default_Image"
   info "Building default image"
-  docker build -t ${REPO_SLUG} .
 
-  if [[ $(docker build -t ${REPO_SLUG} . ) -gt 0 ]]; then
+  if docker build -t "${REPO_SLUG}" .; then
     fatal "Build failed!"
   else
     info "Build succeeded."
   fi
-  fold_end "Building Default Image"
+  fold_end "Building_Default_Image"
 
   if [ "$PUSH_TO_DOCKER" = true ]; then
-    fold_start "Tagging and pushing images to docker hub"
+    fold_start "Tagging_and_pushing_images"
 
     for TAG in $TAGS; do
-      fold_start "Tagging '$TAG' and pushing to docker hub"
+      fold_start "Pushing_'$TAG'"
       docker tag "$REPO_SLUG" "${DOCKER_REPO}:${TAG}"
       docker push "${DOCKER_REPO}:${TAG}"
-      fold_end "Tagging '$TAG' and pushing to docker hub"
+      fold_end "Pushing_'$TAG'"
     done
 
-    fold_end "Tagging and pushing images to docker hub"
+    fold_end "Tagging_and_pushing_images"
 
   fi
 
