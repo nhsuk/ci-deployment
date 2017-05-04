@@ -26,18 +26,18 @@ deploy() {
 
   echo "Building rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRONMENT"
 
+  pushd rancher-config/
   # ACTUALLY DEPLOY NOW
-  ./rancher \
+  ../rancher \
     --wait \
       up  -p \
           -d \
           --upgrade \
           --force-upgrade \
           --confirm-upgrade \
-          --env-file answers.txt \
-          --file docker-compose.production.yml \
+          --env-file ../answers.txt \
           --stack "${RANCHER_STACK_NAME}"
-
+  popd
 
   if [ $? -eq 0 ]; then
     MSG=":rocket: deployment of $REPO_NAME successed (http://$DEPLOY_URL)"
