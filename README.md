@@ -8,7 +8,7 @@ Including this repo within your own (as detailed below) will:
 * Build and tag the Docker image as detailed in the repo's `Dockerfile`. This happens on PR creation/update, tagging (including releases), and commits to the `master` branch
 * Push the image to the appropriate docker repo (`nhsuk/$REPO_STUB`)
 * If the build has been triggered by a PR a new stack will be created within the `nhsuk-dev` environment on the Rancher server based on the `docker-compose.yml` and `rancher-compose.yml` files found in the `rancher-config/` directory.
-* If the build was trigger by a check-in to `master` a deployment will be made to the `nhsuk-dev` environment.
+* If the build was triggered by a check-in to `master` a deployment will be made to the `nhsuk-dev` environment.
 * A publicly accessible URL to the stack will be published as a comment on the PR.
 
 ## Setup in code repo (Travis)
@@ -30,6 +30,7 @@ As the scripts are intended to be run within the Travis CI environment they use 
 | `RANCHER_ACCESS_KEY` | NO | The 'user name' part of the API credentials for Rancher access [Rancher API tokens](https://docs.rancher.com/rancher/v1.1/en/api/v1/api-keys/) | | YES | |
 | `RANCHER_SECRET_KEY` | YES | The 'password' part of the API credentials for Rancher access [Rancher API tokens](https://docs.rancher.com/rancher/v1.1/en/api/v1/api-keys/) | | YES | |
 | `RANCHER_SERVER` | NO | The URL of the Rancher environment | rancher.nhschoices.net | YES | |
+| `RANCHER_ENVIRONMENT` | NO | The URL of the Rancher environment | nhsuk-dev | YES | |
 | `TRAVIS` | NO | Indicates if the environment is `TRAVIS` | | NO | |
 | `TRAVIS_PULL_REQUEST` | NO | PR number | | NO | |
 | `TRAVIS_BRANCH` | NO | Branch name triggering the build | | NO | |

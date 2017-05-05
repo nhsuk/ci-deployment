@@ -4,9 +4,8 @@
 
 set -u          #Display error message for missing variables
 set -e          #Exit with error code if any command fails
-set -o pipefail #prevents errors in a pipeline from being masked
 
-check-rancher-vars() {
+check_rancher_vars() {
 
   RANCHER_ENVS="RANCHER_URL RANCHER_ENVIRONMENT RANCHER_ACCESS_KEY RANCHER_SECRET_KEY"
 
@@ -22,7 +21,7 @@ check-rancher-vars() {
 
 deploy() {
 
-  check-rancher-vars
+  check_rancher_vars
 
   echo "Building rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRONMENT"
 
@@ -37,14 +36,15 @@ deploy() {
           --confirm-upgrade \
           --env-file ../answers.txt \
           --stack "${RANCHER_STACK_NAME}"
-  popd
 
   if [ $? -eq 0 ]; then
-    MSG=":rocket: deployment of $REPO_NAME successed (http://$DEPLOY_URL)"
+    MSG=":rocket: deployment of $REPO_NAME succeeded (http://$DEPLOY_URL)"
   else
     MSG=":warning: deployment of $REPO_NAME failed"
   fi
+  popd
 
+  echo "$MSG"
   if [ "$NOTIFY_METHOD" = "slack" ]; then
     bash ./scripts/ci-deployment/common/post-comment-to-slack.sh "$MSG"
   elif [ "$NOTIFY_METHOD" = "github" ]; then
