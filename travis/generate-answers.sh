@@ -42,7 +42,7 @@ cat answers.txt
 
 # IF MASTER, DEPLOY TO DEV ENV
 elif [ "$TRAVIS_BRANCH" = "master" ]; then
-  echo "DOCKER_IMAGE_TAG=latest" | tee -a answers.txt
+  echo "DOCKER_IMAGE_TAG=latest" | tee --append answers.txt
 
   # LOAD STAGING_SECRETS IF AVAILABLE
   if [ -n "$STAGING_SECRETS" ]; then

@@ -27,7 +27,7 @@ deploy() {
 
   pushd rancher-config/
   # ACTUALLY DEPLOY NOW
-  rancher \
+  ../rancher \
     --wait \
       up  -p \
           -d \
