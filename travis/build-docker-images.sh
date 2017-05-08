@@ -78,9 +78,9 @@ if [ "$TAGS" != "" ]; then
   info "Building default image"
 
   if docker build -t "${REPO_SLUG}" .; then
-    fatal "Build failed!"
-  else
     info "Build succeeded."
+  else
+    fatal "Build failed!"
   fi
   fold_end "Building_Default_Image"
 
