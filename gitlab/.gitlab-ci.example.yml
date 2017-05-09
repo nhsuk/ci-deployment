@@ -1,0 +1,133 @@
+stages:
+  - test
+  - build
+  - deploy_review
+  - deploy_integration
+  - deploy_staging
+  - deploy_production
+
+image: docker:latest
+
+# Enable sharing of secrets etc.
+cache:
+  key: "${CI_JOB_NAME}/${CI_COMMIT_SHA}"
+
+variables:
+  DOCKER_HUB: nhsuk
+  PROJECT_GROUP: nhsuk
+  RANCHER_SERVER: rancher.nhschoices.net
+  ENV_DOMAIN: beta.nhschoices.net
+
+test:
+  stage: test
+  script:
+    - echo "Run tests here"
+
+build_latest_image:
+  stage: build
+  script:
+    - docker login -u $HUB_USER -p $HUB_PASS
+    - docker build -t ${DOCKER_HUB}/${CI_PROJECT_NAME}:latest .
+    - docker push ${DOCKER_HUB}/${CI_PROJECT_NAME}:latest
+  only:
+    - master
+
+build_tag:
+  stage: build
+  script:
+  - docker login -u $HUB_USER -p $HUB_PASS
+  - docker build -t ${DOCKER_HUB}/${CI_PROJECT_NAME}:${CI_COMMIT_TAG} .
+  - docker push ${DOCKER_HUB}/${CI_PROJECT_NAME}:${CI_COMMIT_TAG}
+  only:
+    - tags
+
+build_branches:
+  stage: build
+  script:
+  - docker login -u $HUB_USER -p $HUB_PASS
+  - docker build -t ${DOCKER_HUB}/${CI_PROJECT_NAME}:${CI_COMMIT_REF_SLUG} .
+  - docker push ${DOCKER_HUB}/${CI_PROJECT_NAME}:${CI_COMMIT_REF_SLUG}
+  only:
+    - branches
+  except:
+    - master
+
+
+deploy_review:
+  stage: deploy_review
+  variables:
+    RANCHER_ENVIRONMENT: nhsuk-dev
+    REVIEW_APP: "TRUE"
+  script:
+    - sh ./scripts/ci-deployment/common/install-rancher.sh
+    - sh ./scripts/ci-deployment/gitlab/generate-answers.sh
+    - sh ./scripts/ci-deployment/gitlab/deploy.sh
+  environment:
+    name: review/${CI_COMMIT_REF_NAME}
+    url: https://${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.dev.${ENV_DOMAIN}
+    on_stop: remove_review
+  only:
+    - branches
+  except:
+    - master
+
+remove_review:
+  stage: deploy_review
+  variables:
+    RANCHER_ENVIRONMENT: nhsuk-dev
+    REVIEW_APP: "TRUE"
+  script:
+    - sh ./scripts/ci-deployment/common/install-rancher.sh
+    - sh ./scripts/ci-deployment/gitlab/remove-review-app.sh
+  when: manual
+  environment:
+    name: review/${CI_COMMIT_REF_NAME}
+    action: stop
+  only:
+    - branches
+  except:
+    - master
+
+deploy_integration:
+  stage: deploy_integration
+  variables:
+    RANCHER_ENVIRONMENT: nhsuk-dev
+  script:
+    - sh ./scripts/ci-deployment/common/install-rancher.sh
+    - sh ./scripts/ci-deployment/gitlab/generate-answers.sh
+    - sh ./scripts/ci-deployment/gitlab/deploy.sh
+  environment:
+    name: dev
+    url: http://${CI_PROJECT_NAME}-latest.dev.${ENV_DOMAIN}
+  only:
+    - master
+
+deploy_staging:
+  stage: deploy_staging
+  variables:
+    RANCHER_ENVIRONMENT: nhsuk-staging
+  script:
+    - sh ./scripts/ci-deployment/common/install-rancher.sh
+    - sh ./scripts/ci-deployment/gitlab/generate-answers.sh
+    - sh ./scripts/ci-deployment/gitlab/deploy.sh
+  environment:
+    name: staging
+    url: http://${CI_PROJECT_NAME}.staging.${ENV_DOMAIN}
+  when: manual
+  only:
+    - tags
+
+deploy_production:
+  stage: deploy_production
+  variables:
+    RANCHER_ENVIRONMENT: nhsuk-production
+  script:
+    - sh ./scripts/ci-deployment/common/install-rancher.sh
+    - sh ./scripts/ci-deployment/gitlab/generate-answers.sh
+    - sh ./scripts/ci-deployment/gitlab/deploy.sh
+  environment:
+    name: production
+    url: http://${CI_PROJECT_NAME}.production.${ENV_DOMAIN}
+  when: manual
+  only:
+    - tags

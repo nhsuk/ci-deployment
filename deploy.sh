@@ -4,7 +4,8 @@
 bash ./scripts/ci-deployment/common/install-rancher.sh
 
 if [ "$GITLAB_CI" = "true" ]; then
-  echo "TODO: Gitlab deployment"
+  bash ./scripts/ci-deployment/gitlab/generate-answers.sh
+  bash ./scripts/ci-deployment/gitlab/deploy.sh
 fi
 
 if [ "$TRAVIS" = "true" ]; then

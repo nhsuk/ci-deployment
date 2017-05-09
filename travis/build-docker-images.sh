@@ -2,7 +2,8 @@
 
 PUSH_TO_DOCKER=true
 REPO_SLUG=$(sh ./scripts/ci-deployment/travis/get-repo-name.sh)
-DOCKER_REPO="nhsuk/${REPO_SLUG}"
+DOCKER_HUB="${DOCKER_HUB-nhsuk}"
+DOCKER_REPO="${DOCKER_HUB}/${REPO_SLUG}"
 TAGS=""
 
 info() {
