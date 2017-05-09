@@ -3,14 +3,5 @@ sudo: required
 services:
   - docker
 
-# Travis has docker CLI installed but we need a later version
-before_install:
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
-
 after_success:
-  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-  - ./scripts/ci-deployment/docker_ci.sh
-  - ./scripts/ci-deployment/rancher_pr_deploy.sh
+  - bash ./scripts/ci-deployment/deploy.sh
