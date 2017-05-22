@@ -44,6 +44,8 @@ deploy() {
   fi
   popd
 
+  bash ./scripts/ci-deployment/common/set-stack-description.sh "$RANCHER_DESCRIPTION"
+
   echo "$MSG"
   if [ "$NOTIFY_METHOD" = "slack" ]; then
     bash ./scripts/ci-deployment/common/post-comment-to-slack.sh "$MSG"

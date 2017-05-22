@@ -44,6 +44,8 @@ deploy() {
     MSG=":warning: deployment of $CI_PROJECT_NAME failed"
   fi
 
+  bash ./scripts/ci-deployment/common/set-stack-description.sh "$RANCHER_DESCRIPTION"
+
   bash ./scripts/ci-deployment/common/post-comment-to-slack.sh "$MSG"
 }
 
