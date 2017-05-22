@@ -40,7 +40,7 @@ deploy() {
   popd
 
   if [ $? -eq 0 ]; then
-    MSG=":rocket: deployment of $CI_PROJECT_NAME successed (http://$DEPLOY_URL)"
+    MSG=":rocket: deployment of $CI_PROJECT_NAME succeeded (http://$DEPLOY_URL)"
   else
     MSG=":warning: deployment of $CI_PROJECT_NAME failed"
   fi
