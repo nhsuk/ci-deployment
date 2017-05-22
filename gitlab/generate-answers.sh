@@ -24,7 +24,7 @@ echo "" > answers.txt
   echo "RANCHER_ENVIRONMENT=${RANCHER_ENVIRONMENT-nhsuk-dev}"
   echo "RANCHER_STACK_NAME=${CI_PROJECT_NAME}"
   echo "TRAEFIK_DOMAIN=${CI_ENVIRONMENT_SLUG}.beta.nhschoices.net"
-  echo "DEPLOY_URL='${CI_PROJECT_NAME}.${CI_ENVIRONMENT_NAME}.beta.nhschoices.net'"
+  echo "DEPLOY_URL='${CI_PROJECT_NAME}-${CI_ENVIRONMENT_NAME}.beta.nhschoices.net'"
 } >> answers.txt
 
 if [ -n "${CI_COMMIT_TAG}" ]; then
