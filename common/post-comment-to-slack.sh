@@ -2,20 +2,20 @@
 
 MSG="$1"
 
-if [ -z "$SLACK_TOKEN" ]; then
-  echo "Failed to post comment to slack (SLACK_TOKEN not set)"
+if [ -z "$SLACK_HOOK_URL" ]; then
+  echo "Failed to post comment to slack (SLACK_HOOK_URL not set)"
   exit 1
 fi
 
-if [ -z "$SLACK_CHANNEL_ID" ]; then
-  echo "Failed to post comment to slack (SLACK_CHANNEL_ID not set)"
+if [ -z "$SLACK_CHANNEL" ]; then
+  echo "Failed to post comment to slack (SLACK_CHANNEL not set)"
   exit 1
 fi
 
-SLACK_RESPONSE=$(curl -s --data-urlencode "text=$MSG" "https://slack.com/api/chat.postMessage?token=${SLACK_TOKEN}&channel=${SLACK_CHANNEL_ID}")
+SLACK_RESPONSE=$(curl -s -X POST --data-urlencode "payload={'channel': '#${SLACK_CHANNEL}', 'text': '${MSG}'}" $SLACK_HOOK_URL)
 
-if echo $SLACK_RESPONSE | grep -q '"ok":true'; then
-   echo "Comment '${MSG}' posted to slack channel ${SLACK_CHANNEL_ID}"
+if echo $SLACK_RESPONSE | grep 'ok'; then
+   echo "Comment '${MSG}' posted to slack channel #${SLACK_CHANNEL}"
  else
-   echo "Failed to post comment '${MSG}' slack channel ${SLACK_CHANNEL_ID} (${SLACK_RESPONSE})"
+   echo "Failed to post comment '${MSG}' slack channel ${SLACK_CHANNEL} (${SLACK_RESPONSE})"
  fi
