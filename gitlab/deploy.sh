@@ -35,7 +35,6 @@ deploy() {
           --upgrade \
           --force-upgrade \
           --confirm-upgrade \
-          --env-file ../answers.txt \
           --stack "${RANCHER_STACK_NAME}"
   popd
 
