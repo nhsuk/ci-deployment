@@ -14,9 +14,12 @@ check_rancher_vars() {
 
 }
 
-check_rancher_vars
 
-export RANCHER_URL="https://${RANCHER_SERVER}/v2-beta/schemas"
-RANCHER_STACK_NAME="${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}"
+# EXPORT ALL THE VARIABLES FROM THE ANSWERS FILE
+set -o allexport
+source answers.txt
+set +o allexport
+
+check_rancher_vars
 
 rancher --wait rm "${RANCHER_STACK_NAME}"
