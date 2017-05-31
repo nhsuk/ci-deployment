@@ -7,7 +7,7 @@ DATA=$(curl -s -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" \
   -X GET \
   -H 'Accept: application/json' \
   -H 'Content-Type: application/json' \
-  "https://rancher.nhschoices.net/v2-beta/projects" \
+  "https://${RANCHER_SERVER}/v2-beta/projects" \
   )
 RANCHER_ENVIRONMENT_ID=$(echo $DATA | jq --raw-output ".data[] | select(.name==\"${RANCHER_ENVIRONMENT}\") | .id")
 
@@ -16,7 +16,7 @@ DATA=$(curl -s -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" \
   -X GET \
   -H 'Accept: application/json' \
   -H 'Content-Type: application/json' \
-  "https://rancher.nhschoices.net/v2-beta/projects/${RANCHER_ENVIRONMENT_ID}/stacks?name=${RANCHER_STACK_NAME}" \
+  "https://${RANCHER_SERVER}/v2-beta/projects/${RANCHER_ENVIRONMENT_ID}/stacks?name=${RANCHER_STACK_NAME}" \
   )
 STACK_ID=$(echo $DATA | jq --raw-output '.data[].id')
 
@@ -26,4 +26,4 @@ curl -s -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" \
   -H 'Accept: application/json' \
   -H 'Content-Type: application/json' \
   -d "{\"description\":\"${RANCHER_DESCRIPTION}\"}" \
-  "https://rancher.nhschoices.net/v2-beta/projects/${RANCHER_ENVIRONMENT_ID}/stacks/${STACK_ID}"
+  "https://${RANCHER_SERVER}/v2-beta/projects/${RANCHER_ENVIRONMENT_ID}/stacks/${STACK_ID}"

@@ -14,12 +14,6 @@ check_rancher_vars() {
 
 }
 
-
-# EXPORT ALL THE VARIABLES FROM THE ANSWERS FILE
-set -o allexport
-source answers.txt
-set +o allexport
-
 check_rancher_vars
 
 rancher --wait rm "${RANCHER_STACK_NAME}"

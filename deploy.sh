@@ -2,14 +2,17 @@
 
 # INSTALL RANCHER
 bash ./scripts/ci-deployment/common/install-rancher.sh
+bash ./scripts/ci-deployment/common/generate-answers.sh
 
-if [ "$GITLAB_CI" = "true" ]; then
-  bash ./scripts/ci-deployment/gitlab/generate-answers.sh
-  bash ./scripts/ci-deployment/gitlab/deploy.sh
-fi
+
+# EXPORT ALL THE VARIABLES FROM THE GENERATED ANSWERS FILE
+set -o allexport
+# shellcheck source=/dev/null
+source answers.txt
+set +o allexport
 
 if [ "$TRAVIS" = "true" ]; then
   bash ./scripts/ci-deployment/travis/build-docker-images.sh
-  bash ./scripts/ci-deployment/travis/generate-answers.sh
-  bash ./scripts/ci-deployment/travis/deploy.sh
 fi
+
+bash ./scripts/ci-deployment/common/deploy.sh
