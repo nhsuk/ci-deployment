@@ -36,10 +36,12 @@ deploy() {
           --stack "${RANCHER_STACK_NAME}"
 
   if [ $? -eq 0 ]; then
-    MSG=":rocket: deployment of $REPO_NAME succeeded (http://$DEPLOY_URL)"
+    DEPLOYMENT_SUCCEEDED="true"
   else
-    MSG=":warning: deployment of $REPO_NAME failed"
+    DEPLOYMENT_SUCCEEDED="false"
   fi
+  MSG=$(./scripts/ci-deployment/common/deployment-msg.sh "$DEPLOYMENT_SUCCEEDED")
+
   popd > /dev/null
 
   bash ./scripts/ci-deployment/common/set-stack-description.sh "$RANCHER_DESCRIPTION"
