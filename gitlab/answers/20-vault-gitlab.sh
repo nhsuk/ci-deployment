@@ -21,39 +21,43 @@ if [ "$SKIP" != "1" ]; then
   fi
 
 
-  # GET COMMON VARIABLES
-  VAULT_PATH="/v1/secret/common"
+  # GET DEFAULT VARIABLES
+  VAULT_PATH="/v1/secret/defaults"
 
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
-  echo "Retrieving common variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
-  DATA=$( curl -s  \
-      -H "X-Vault-Token: ${VAULT_TOKEN}" \
-      -X GET \
-      https://${VAULT_SERVER}${VAULT_PATH} \
-  )
+  echo "Retrieving default variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
+  if [ "$HTTP_STATUS" = "200" ]; then
+    DATA=$( curl -s  \
+        -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        -X GET \
+        https://${VAULT_SERVER}${VAULT_PATH} \
+    )
+  fi
   echo "$DATA" | jq -r '.data | to_entries[] | (.key+"=\""+.value+"\"")' >> answers.txt
 
 
   # GET ENVIRONMENT COMMON VARIABLES
-  VAULT_PATH="/v1/secret/${ENVIRONMENT}/common"
+  VAULT_PATH="/v1/secret/${ENVIRONMENT}/defaults"
 
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
-  echo "Retrieving common environment variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
-  DATA=$( curl -s \
-      -H "X-Vault-Token: ${VAULT_TOKEN}" \
-      -X GET \
-      https://${VAULT_SERVER}${VAULT_PATH} \
-  )
+  echo "Retrieving default environment variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
+  if [ "$HTTP_STATUS" = "200" ]; then
+    DATA=$( curl -s \
+        -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        -X GET \
+        https://${VAULT_SERVER}${VAULT_PATH} \
+    )
+  fi
   echo "$DATA" | jq -r '.data | to_entries[] | (.key+"=\""+.value+"\"")' >> answers.txt
 
 
-  # GET APPLICATION VARIABLES (COMMON ACROSS ALL ENVIRIONMENTS)
+  # GET APPLICATION VARIABLES (DEFAULTS)
   # IF AVAILABLE
-  VAULT_PATH="/v1/secret/common/${CI_PROJECT_NAME}/env-vars"
+  VAULT_PATH="/v1/secret/defaults/${CI_PROJECT_NAME}/env-vars"
 
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
+  echo "Retrieving application default variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
   if [ "$HTTP_STATUS" = "200" ]; then
-    echo "Retrieving application specific variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
     DATA=$( curl -s \
         -H "X-Vault-Token: ${VAULT_TOKEN}" \
         -X GET \
@@ -63,16 +67,17 @@ if [ "$SKIP" != "1" ]; then
   fi
 
 
-  # GET APPLICATION SPECIFIC VARIABLES
+  # GET APPLICATION VARIABLES (ENVIRONMENT SPECIFIC)
   VAULT_PATH="/v1/secret/${ENVIRONMENT}/${CI_PROJECT_NAME}/env-vars"
 
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
   echo "Retrieving application specific variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
-  DATA=$( curl -s \
-      -H "X-Vault-Token: ${VAULT_TOKEN}" \
-      -X GET \
-      https://${VAULT_SERVER}${VAULT_PATH} \
-  )
-  echo "$DATA" | jq -r '.data | to_entries[] | (.key+"=\""+.value+"\"")' >> answers.txt
-
+  if [ "$HTTP_STATUS" = "200" ]; then
+    DATA=$( curl -s \
+        -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        -X GET \
+        https://${VAULT_SERVER}${VAULT_PATH} \
+    )
+    echo "$DATA" | jq -r '.data | to_entries[] | (.key+"=\""+.value+"\"")' >> answers.txt
+  fi
 fi

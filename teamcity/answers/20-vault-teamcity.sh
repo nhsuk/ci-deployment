@@ -14,14 +14,7 @@ fi
 
 if [ "$SKIP" != "1" ]; then
 
-  REPO_STUB=$(sh ./scripts/ci-deployment/travis/get-repo-name.sh)
-
-  if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    ENVIRONMENT="review"
-  else
-    ENVIRONMENT="dev"
-  fi
-
+  ENVIRONMENT="$CI_ENVIRONMENT_NAME"
 
   # GET DEFAULT VARIABLES
   VAULT_PATH="/v1/secret/defaults"
@@ -55,7 +48,7 @@ if [ "$SKIP" != "1" ]; then
 
   # GET APPLICATION VARIABLES (DEFAULTS)
   # IF AVAILABLE
-  VAULT_PATH="/v1/secret/defaults/${REPO_STUB}/env-vars"
+  VAULT_PATH="/v1/secret/defaults/${TEAMCITY_PROJECT_NAME}/env-vars"
 
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
   echo "Retrieving application default variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
@@ -70,7 +63,7 @@ if [ "$SKIP" != "1" ]; then
 
 
   # GET APPLICATION VARIABLES (ENVIRONMENT SPECIFIC)
-  VAULT_PATH="/v1/secret/${ENVIRONMENT}/${REPO_STUB}/env-vars"
+  VAULT_PATH="/v1/secret/${ENVIRONMENT}/${TEAMCITY_PROJECT_NAME}/env-vars"
 
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
   echo "Retrieving application specific variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"

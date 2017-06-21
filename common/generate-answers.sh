@@ -18,6 +18,15 @@ if [ "$GITLAB_CI" = "true" ] && [ -d "./scripts/ci-deployment/gitlab/answers" ];
   done
 fi
 
+# LOAD ALL TEAMCITY ANSWER FILES, IF DIRECTORY EXISTS
+if [ -n "$TEAMCITY_VERSION" ] && [ -d "./scripts/ci-deployment/teamcity/answers" ]; then
+  for f in ./scripts/ci-deployment/teamcity/answers/*; do
+    echo "Loading answers from $f"
+    # shellcheck source=/dev/null
+    . "$f"
+  done
+fi
+
 # LOAD ALL TRAVIS ANSWER FILES, IF DIRECTORY EXISTS
 if [ "$TRAVIS" = "true" ] && [ -d "./scripts/ci-deployment/travis/answers" ]; then
   for f in ./scripts/ci-deployment/travis/answers/*; do

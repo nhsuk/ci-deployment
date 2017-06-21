@@ -2,7 +2,6 @@
 
 # See here http://redsymbol.net/articles/unofficial-bash-strict-mode/ the rational for using u, e and o bash options
 
-set -u          #Display error message for missing variables
 set -e          #Exit with error code if any command fails
 
 check_rancher_vars() {
@@ -55,14 +54,20 @@ deploy() {
 
 
 # TRAVIS: ONLY DEPLOY ON PRS AND MASTER
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-  export NOTIFY_METHOD="github"
-  deploy
-elif [ "$TRAVIS_BRANCH" = "master" ]; then
-  export NOTIFY_METHOD="slack"
-  deploy
+if [ "$TRAVIS" = "true" ]; then
+  if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+    export NOTIFY_METHOD="github"
+    deploy
+  elif [ "$TRAVIS_BRANCH" = "master" ]; then
+    export NOTIFY_METHOD="slack"
+    deploy
+  fi
 # GITLAB CI: THIS WILL HAVE BEEN TRIGGERED, SO ALWAYS DEPLOY
 elif [ -n "$GITLAB_CI" ]; then
+  export NOTIFY_METHOD="slack"
+  deploy
+# TEAMCITY: USED TO PROMOTE RELEASES TO STAGING/PRODUCTION
+elif [ -n "$TEAMCITY_VERSION" ]; then
   export NOTIFY_METHOD="slack"
   deploy
 fi
