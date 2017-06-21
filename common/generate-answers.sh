@@ -44,3 +44,6 @@ if [ -d "./scripts/answers.d" ]; then
     . "$f"
   done
 fi
+
+# ENSURE answers.txt isn't in the Dockerfile!
+echo "answers.txt" >> .dockerignore
