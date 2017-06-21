@@ -40,18 +40,20 @@ deploy() {
   else
     DEPLOYMENT_SUCCEEDED="false"
   fi
-  MSG=$(bash ./scripts/ci-deployment/common/deployment-msg.sh "$DEPLOYMENT_SUCCEEDED")
-
   popd > /dev/null
 
+  # SET STACK DESCRIPTION
   bash ./scripts/ci-deployment/common/set-stack-description.sh "$RANCHER_DESCRIPTION"
 
+  # PUSH NOTIFICATION TO SLACK OR GITHUB
+  MSG=$(bash ./scripts/ci-deployment/common/deployment-msg.sh "$DEPLOYMENT_SUCCEEDED")
   echo "$MSG"
   if [ "$NOTIFY_METHOD" = "slack" ]; then
     bash ./scripts/ci-deployment/common/post-comment-to-slack.sh "$MSG"
   elif [ "$NOTIFY_METHOD" = "github" ]; then
     bash ./scripts/ci-deployment/travis/post-comment-to-github-pr.sh "$MSG"
   fi
+
 }
 
 
