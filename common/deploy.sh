@@ -40,7 +40,7 @@ deploy() {
   else
     DEPLOYMENT_SUCCEEDED="false"
   fi
-  MSG=$(./scripts/ci-deployment/common/deployment-msg.sh "$DEPLOYMENT_SUCCEEDED")
+  MSG=$(bash ./scripts/ci-deployment/common/deployment-msg.sh "$DEPLOYMENT_SUCCEEDED")
 
   popd > /dev/null
 
