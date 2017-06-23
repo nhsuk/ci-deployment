@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# CHECK RANCER_SERVER ENV EXISTS
+# CHECK RANCHER_SERVER ENV EXISTS
 if [ -z "$VAULT_SERVER" ]; then
   echo "VAULT_SERVER not set, skipping vault config"
   SKIP="1"
 fi
 
-# CHECK RANCER_SERVER ENV EXISTS
+# CHECK RANCHER_SERVER ENV EXISTS
 if [ -z "$VAULT_TOKEN" ]; then
   echo "VAULT_TOKEN not set, skipping vault config"
   SKIP="1"
