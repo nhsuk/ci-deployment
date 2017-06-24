@@ -10,8 +10,10 @@ fi
 
 if [ "$DEPLOYMENT_STATUS" = "successful" ]; then
   MSG=":rocket: Deployment Succeeded"
+  COLOR="good"
 else
   MSG=":warning: Deployment failed"
+  COLOR="danger"
 fi
 
 read -r -d '' SLACK_PAYLOAD << EOM
@@ -21,7 +23,7 @@ read -r -d '' SLACK_PAYLOAD << EOM
     "attachments": [
         {
             "fallback": "$MSG",
-            "color": "good",
+            "color": "$COLOR",
             "fields": [
                 {
                     "title": "Application",
