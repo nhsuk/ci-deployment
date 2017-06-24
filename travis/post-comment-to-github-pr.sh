@@ -1,13 +1,17 @@
 #!/bin/bash
 
-MSG=$1
-
 PULL_REQUEST="$TRAVIS_PULL_REQUEST"
 REPO="$TRAVIS_REPO_SLUG"
 
 if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
   echo "GITHUB_ACCESS_TOKEN not set"
   exit 1
+fi
+
+if [ "$DEPLOYMENT_STATUS" = "successful" ]; then
+  MSG=":rocket: deployment of $REPO succeeded (http://$DEPLOY_URL)"
+else
+  MSG=":warning: deployment of $REPO failed"
 fi
 
 PAYLOAD="{\"body\": \"${MSG}\" }"

@@ -11,5 +11,5 @@ source answers.txt
 set +o allexport
 
 docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-docker build -t nhsuk/"${CI_PROJECT_NAME}":"${IMAGE_TAG}" .
-docker push nhsuk/"${CI_PROJECT_NAME}":"${IMAGE_TAG}"
+docker build -t "nhsuk/${CI_PROJECT_NAME}:${IMAGE_TAG}" .
+docker push "nhsuk/${CI_PROJECT_NAME}:${IMAGE_TAG}"
