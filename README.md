@@ -1,5 +1,7 @@
 # CI Deployment Scripts
 
+[![Build Status](https://travis-ci.org/nhsuk/ci-deployment.svg?branch=master)](https://travis-ci.org/nhsuk/ci-deployment)
+
 This repo contains deployment scripts that are intended to be executed during the build stage on either [Travis CI](https://travis-ci.org) or [Gitlab CI](https://about.gitlab.com/features/gitlab-ci-cd/).
 
 In order for the scripts to function correctly a number of steps must be taken to configure the repo which is to make use of the deployment scripts. Steps include adding this repo as a [Git submodule](https://git-scm.com/docs/git-submodule) along with configuration of a number of files.
