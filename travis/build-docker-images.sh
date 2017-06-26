@@ -18,13 +18,13 @@ fatal() {
 }
 
 fold_start() {
-  if [ -n $TRAVIS ]; then
+  if [ -n "$TRAVIS" ]; then
     printf "%s\n" "travis_fold:start:$*"
   fi
 }
 
 fold_end() {
-  if [ -n $TRAVIS ]; then
+  if [ -n "$TRAVIS" ]; then
     printf "%s\n" "travis_fold:end:$*"
   fi
 }

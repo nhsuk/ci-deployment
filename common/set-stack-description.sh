@@ -9,7 +9,7 @@ DATA=$(curl -s -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" \
   -H 'Content-Type: application/json' \
   "https://${RANCHER_SERVER}/v2-beta/projects" \
   )
-RANCHER_ENVIRONMENT_ID=$(echo $DATA | jq --raw-output ".data[] | select(.name==\"${RANCHER_ENVIRONMENT}\") | .id")
+RANCHER_ENVIRONMENT_ID=$(echo "$DATA" | jq --raw-output ".data[] | select(.name==\"${RANCHER_ENVIRONMENT}\") | .id")
 
 # GET STACK ID
 DATA=$(curl -s -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" \
@@ -18,7 +18,7 @@ DATA=$(curl -s -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" \
   -H 'Content-Type: application/json' \
   "https://${RANCHER_SERVER}/v2-beta/projects/${RANCHER_ENVIRONMENT_ID}/stacks?name=${RANCHER_STACK_NAME}" \
   )
-STACK_ID=$(echo $DATA | jq --raw-output '.data[].id')
+STACK_ID=$(echo "$DATA" | jq --raw-output '.data[].id')
 
 # UPDATE RANCHER DESCRIPTION
 curl -s -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" \

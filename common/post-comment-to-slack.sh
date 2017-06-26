@@ -12,9 +12,9 @@ if [ -z "$SLACK_CHANNEL" ]; then
   exit 1
 fi
 
-SLACK_RESPONSE=$(curl -s -X POST --data-urlencode "payload={'channel': '#${SLACK_CHANNEL}', 'text': '${MSG}'}" $SLACK_HOOK_URL)
+SLACK_RESPONSE=$(curl -s -X POST --data-urlencode "payload={'channel': '#${SLACK_CHANNEL}', 'text': '${MSG}'}" "$SLACK_HOOK_URL")
 
-if echo $SLACK_RESPONSE | grep 'ok'; then
+if echo "$SLACK_RESPONSE" | grep 'ok'; then
    echo "Comment '${MSG}' posted to slack channel #${SLACK_CHANNEL}"
  else
    echo "Failed to post comment '${MSG}' slack channel ${SLACK_CHANNEL} (${SLACK_RESPONSE})"
