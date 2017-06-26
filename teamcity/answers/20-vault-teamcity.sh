@@ -19,13 +19,13 @@ if [ "$SKIP" != "1" ]; then
   # GET DEFAULT VARIABLES
   VAULT_PATH="/v1/secret/defaults"
 
-  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
+  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET "https://${VAULT_SERVER}${VAULT_PATH}")
   echo "Retrieving default variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
   if [ "$HTTP_STATUS" = "200" ]; then
     DATA=$( curl -s  \
         -H "X-Vault-Token: ${VAULT_TOKEN}" \
         -X GET \
-        https://${VAULT_SERVER}${VAULT_PATH} \
+        "https://${VAULT_SERVER}${VAULT_PATH}" \
     )
   fi
   echo "$DATA" | jq -r '.data | to_entries[] | (.key+"=\""+.value+"\"")' >> answers.txt
@@ -34,13 +34,13 @@ if [ "$SKIP" != "1" ]; then
   # GET ENVIRONMENT COMMON VARIABLES
   VAULT_PATH="/v1/secret/${ENVIRONMENT}/defaults"
 
-  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
+  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET "https://${VAULT_SERVER}${VAULT_PATH}")
   echo "Retrieving default environment variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
   if [ "$HTTP_STATUS" = "200" ]; then
     DATA=$( curl -s \
         -H "X-Vault-Token: ${VAULT_TOKEN}" \
         -X GET \
-        https://${VAULT_SERVER}${VAULT_PATH} \
+        "https://${VAULT_SERVER}${VAULT_PATH}" \
     )
   fi
   echo "$DATA" | jq -r '.data | to_entries[] | (.key+"=\""+.value+"\"")' >> answers.txt
@@ -50,13 +50,13 @@ if [ "$SKIP" != "1" ]; then
   # IF AVAILABLE
   VAULT_PATH="/v1/secret/defaults/${TEAMCITY_PROJECT_NAME}/env-vars"
 
-  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
+  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET "https://${VAULT_SERVER}${VAULT_PATH}")
   echo "Retrieving application default variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
   if [ "$HTTP_STATUS" = "200" ]; then
     DATA=$( curl -s \
         -H "X-Vault-Token: ${VAULT_TOKEN}" \
         -X GET \
-        https://${VAULT_SERVER}${VAULT_PATH} \
+        "https://${VAULT_SERVER}${VAULT_PATH}" \
     )
     echo "$DATA" | jq -r '.data | to_entries[] | (.key+"=\""+.value+"\"")' >> answers.txt
   fi
@@ -65,13 +65,13 @@ if [ "$SKIP" != "1" ]; then
   # GET APPLICATION VARIABLES (ENVIRONMENT SPECIFIC)
   VAULT_PATH="/v1/secret/${ENVIRONMENT}/${TEAMCITY_PROJECT_NAME}/env-vars"
 
-  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET https://${VAULT_SERVER}${VAULT_PATH})
+  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET "https://${VAULT_SERVER}${VAULT_PATH}")
   echo "Retrieving application specific variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
   if [ "$HTTP_STATUS" = "200" ]; then
     DATA=$( curl -s \
         -H "X-Vault-Token: ${VAULT_TOKEN}" \
         -X GET \
-        https://${VAULT_SERVER}${VAULT_PATH} \
+        "https://${VAULT_SERVER}${VAULT_PATH}" \
     )
     echo "$DATA" | jq -r '.data | to_entries[] | (.key+"=\""+.value+"\"")' >> answers.txt
   fi

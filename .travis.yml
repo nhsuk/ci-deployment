@@ -1,9 +1,16 @@
+language: bash
+
 sudo: required
 
 addons:
   apt:
+    sources:
+    - debian-sid    # Grab shellcheck from the Debian repo (o_O)
     packages:
-      - jq
+    - shellcheck
+
+script:
+ - bash -c 'shopt -s nullglob globstar; shellcheck **/*.{sh,bash}'
 
 services:
   - docker
