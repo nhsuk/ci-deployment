@@ -10,7 +10,7 @@ addons:
     - shellcheck
 
 script:
- - bash -c 'shopt -s globstar; shellcheck **/*.{sh,bash}'
+ - bash -c 'shopt -s nullglob globstar; shellcheck **/*.{sh,bash}'
 
 services:
   - docker
