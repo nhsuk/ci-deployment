@@ -15,6 +15,7 @@ elif [ "$CI_COMMIT_REF_SLUG" = "master" ]; then
   echo "DOCKER_IMAGE_TAG=latest" >> answers.txt
 else
   # IT'S A BRANCH
+  # shellcheck disable=2129
   echo "DEPLOY_URL='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.dev.beta.nhschoices.net'" >> answers.txt
   echo "RANCHER_STACK_NAME='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}'" >> answers.txt
   echo "DOCKER_IMAGE_TAG=${CI_COMMIT_REF_SLUG}" >> answers.txt
