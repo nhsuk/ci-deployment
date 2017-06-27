@@ -26,16 +26,17 @@ deploy() {
 
   pushd rancher-config/ > /dev/null
   # ACTUALLY DEPLOY NOW
-  RANCHER_OUTPUT=$(../rancher \
+  ../rancher \
     --wait \
       up  -p \
           -d \
           --upgrade \
           --force-upgrade \
           --confirm-upgrade \
-          --stack "${RANCHER_STACK_NAME}")
+          --stack "${RANCHER_STACK_NAME}"
 
-  if ! $RANCHER_OUTPUT ; then
+  # shellcheck disable=SC2181
+  if [ $? -eq 0 ] ; then
     DEPLOYMENT_SUCCEEDED="true"
   else
     DEPLOYMENT_SUCCEEDED="false"
