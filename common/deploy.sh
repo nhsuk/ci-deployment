@@ -2,7 +2,6 @@
 
 # See here http://redsymbol.net/articles/unofficial-bash-strict-mode/ the rational for using u, e and o bash options
 
-set -u          #Display error message for missing variables
 set -e          #Exit with error code if any command fails
 
 check_rancher_vars() {
@@ -25,44 +24,54 @@ deploy() {
 
   echo "Building rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRONMENT"
 
-  pushd rancher-config/
+  pushd rancher-config/ > /dev/null
   # ACTUALLY DEPLOY NOW
-  ../rancher \
+  RANCHER_OUTPUT=$(../rancher \
     --wait \
       up  -p \
           -d \
           --upgrade \
           --force-upgrade \
           --confirm-upgrade \
-          --env-file ../answers.txt \
-          --stack "${RANCHER_STACK_NAME}"
+          --stack "${RANCHER_STACK_NAME}")
 
-  if [ $? -eq 0 ]; then
-    MSG=":rocket: deployment of $REPO_NAME succeeded (http://$DEPLOY_URL)"
+  if ! $RANCHER_OUTPUT ; then
+    DEPLOYMENT_SUCCEEDED="true"
   else
-    MSG=":warning: deployment of $REPO_NAME failed"
+    DEPLOYMENT_SUCCEEDED="false"
   fi
-  popd
+  popd > /dev/null
 
+  # SET STACK DESCRIPTION
+  bash ./scripts/ci-deployment/common/set-stack-description.sh "$RANCHER_DESCRIPTION"
+
+  # PUSH NOTIFICATION TO SLACK OR GITHUB
+  MSG=$(bash ./scripts/ci-deployment/common/deployment-msg.sh "$DEPLOYMENT_SUCCEEDED")
   echo "$MSG"
   if [ "$NOTIFY_METHOD" = "slack" ]; then
     bash ./scripts/ci-deployment/common/post-comment-to-slack.sh "$MSG"
   elif [ "$NOTIFY_METHOD" = "github" ]; then
     bash ./scripts/ci-deployment/travis/post-comment-to-github-pr.sh "$MSG"
   fi
+
 }
 
 
-# EXPORT ALL THE VARIABLES FROM THE ANSWERS FILE
-set -o allexport
-source answers.txt
-set +o allexport
-
-# ONLY DEPLOY ON PRS AND MASTER
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-  export NOTIFY_METHOD="github"
+# TRAVIS: ONLY DEPLOY ON PRS AND MASTER
+if [ "$TRAVIS" = "true" ]; then
+  if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+    export NOTIFY_METHOD="github"
+    deploy
+  elif [ "$TRAVIS_BRANCH" = "master" ]; then
+    export NOTIFY_METHOD="slack"
+    deploy
+  fi
+# GITLAB CI: THIS WILL HAVE BEEN TRIGGERED, SO ALWAYS DEPLOY
+elif [ -n "$GITLAB_CI" ]; then
+  export NOTIFY_METHOD="slack"
   deploy
-elif [ "$TRAVIS_BRANCH" = "master" ]; then
+# TEAMCITY: USED TO PROMOTE RELEASES TO STAGING/PRODUCTION
+elif [ -n "$TEAMCITY_VERSION" ]; then
   export NOTIFY_METHOD="slack"
   deploy
 fi
