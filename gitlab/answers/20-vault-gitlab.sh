@@ -2,7 +2,7 @@
 
 get_vault_data() {
 
-  VAULT_PATH = "$1"
+  VAULT_PATH="$1"
 
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET "https://${VAULT_SERVER}${VAULT_PATH}")
   echo "Retrieving default variables from path: ${VAULT_PATH}. Status ${HTTP_STATUS}"
@@ -40,19 +40,19 @@ if [ "$SKIP" != "1" ]; then
 
   # GET DEFAULT VARIABLES
   VAULT_PATH="/v1/secret/defaults"
-  get_vault_data("$VAULT_PATH")
+  get_vault_data "$VAULT_PATH"
 
   # GET ENVIRONMENT COMMON VARIABLES
   VAULT_PATH="/v1/secret/${ENVIRONMENT}/defaults"
-  get_vault_data("$VAULT_PATH")
+  get_vault_data "$VAULT_PATH"
 
   # GET APPLICATION VARIABLES (DEFAULTS)
   # IF AVAILABLE
   VAULT_PATH="/v1/secret/defaults/${CI_PROJECT_NAME}/env-vars"
-  get_vault_data("$VAULT_PATH")
+  get_vault_data "$VAULT_PATH"
 
   # GET APPLICATION VARIABLES (ENVIRONMENT SPECIFIC)
   VAULT_PATH="/v1/secret/${ENVIRONMENT}/${CI_PROJECT_NAME}/env-vars"
-  get_vault_data("$VAULT_PATH")
+  get_vault_data "$VAULT_PATH"
 
 fi
