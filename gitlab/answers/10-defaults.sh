@@ -6,6 +6,7 @@
   echo "PROJECT_NAME=${CI_PROJECT_NAME}"
   echo "DEPLOY_URL='${CI_PROJECT_NAME}.${CI_ENVIRONMENT_NAME}.beta.nhschoices.net'"
   echo "RANCHER_DESCRIPTION='${CI_REPOSITORY_URL}'"
+  echo "DEPLOY_BUILD=true"
 } >> answers.txt
 
 # TAG BUILDS

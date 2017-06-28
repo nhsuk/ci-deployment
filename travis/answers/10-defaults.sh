@@ -14,6 +14,8 @@ REPO_STUB=$(sh ./scripts/ci-deployment/travis/get-repo-name.sh)
 # IF PR, DEPLOY TO DEV ENV
 if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
   {
+    echo "NOTIFICATION_METHOD=github"
+    echo "DEPLOY_BUILD=true"
     echo "DOCKER_IMAGE_TAG=pr-${TRAVIS_PULL_REQUEST}"
     echo "RANCHER_STACK_NAME='${REPO_STUB}-pr-${TRAVIS_PULL_REQUEST}'"
     echo "DEPLOY_URL='${REPO_STUB}-pr-${TRAVIS_PULL_REQUEST}.dev.beta.nhschoices.net'"
@@ -22,5 +24,6 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
 
 # IF MASTER, DEPLOY TO DEV ENV
 elif [ "$TRAVIS_BRANCH" = "master" ]; then
+  echo "DEPLOY_BUILD=true"
   echo "DOCKER_IMAGE_TAG=latest" | tee --append answers.txt
 fi
