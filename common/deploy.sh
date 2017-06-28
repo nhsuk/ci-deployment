@@ -35,14 +35,9 @@ deploy() {
           --confirm-upgrade \
           --stack "${RANCHER_STACK_NAME}"
 
-<<<<<<< HEAD
   # shellcheck disable=SC2181
-  if [ $? -eq 0 ] ; then
-    DEPLOYMENT_SUCCEEDED="true"
-=======
   if [ $? -eq 0 ]; then
     export DEPLOYMENT_STATUS="successful"
->>>>>>> Make slack messages beautiful
   else
     export DEPLOYMENT_STATUS="failed"
   fi
