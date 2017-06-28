@@ -22,34 +22,26 @@ test:
   script:
     - echo "Run tests here"
 
-build_latest_image:
+build_latest:
   stage: build
   script:
-    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-    - docker build -t ${DOCKER_HUB}/${CI_PROJECT_NAME}:latest .
-    - docker push ${DOCKER_HUB}/${CI_PROJECT_NAME}:latest
+    - bash ./scripts/ci-deployment/gitlab/build-docker-images.sh "latest"
   only:
     - master
 
 build_tag:
   stage: build
   script:
-  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-  - docker build -t ${DOCKER_HUB}/${CI_PROJECT_NAME}:${CI_COMMIT_TAG} .
-  - docker push ${DOCKER_HUB}/${CI_PROJECT_NAME}:${CI_COMMIT_TAG}
+    - bash ./scripts/ci-deployment/gitlab/build-docker-images.sh "$CI_COMMIT_TAG"
   only:
     - tags
 
 build_branches:
   stage: build
   script:
-  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-  - docker build -t ${DOCKER_HUB}/${CI_PROJECT_NAME}:${CI_COMMIT_REF_SLUG} .
-  - docker push ${DOCKER_HUB}/${CI_PROJECT_NAME}:${CI_COMMIT_REF_SLUG}
+    - bash ./scripts/ci-deployment/gitlab/build-docker-images.sh "$CI_COMMIT_REF_SLUG"
   only:
-    - branches
-  except:
-    - master
+    - /^review.*$/
 
 deploy_review:
   stage: deploy_review
