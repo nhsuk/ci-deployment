@@ -23,7 +23,7 @@ else
   CI_TOOL="manual"
 fi
 export CI_TOOL
-echo "$CI_TOOL" >> answers.txt
+echo "CI_TOOL=$CI_TOOL" >> answers.txt
 
 # LOAD CI TOOL SPECIFIC ANSWER FILES, IF DIRECTORY EXISTS
 if [ -d "./scripts/ci-deployment/${CI_TOOL}/answers" ]; then
