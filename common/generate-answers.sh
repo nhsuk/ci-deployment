@@ -12,9 +12,6 @@ if [ -d "./scripts/ci-deployment/common/answers" ]; then
   done
 fi
 
-elif [ -n "$TEAMCITY_VERSION" ]; then
-fi
-
 # SET CI_TOOL VARIABLE
 if [ "$GITLAB_CI" = "true" ]; then
   CI_TOOL="gitlab"
