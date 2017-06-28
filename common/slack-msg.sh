@@ -1,13 +1,5 @@
 #!/bin/bash
 
-if [ "$TRAVIS" = "true" ]; then
-  PROJECT_NAME="$REPO_NAME"
-elif [ -n "$GITLAB_CI" ]; then
-  PROJECT_NAME="$CI_PROJECT_NAME"
-elif [ -n "$TEAMCITY_VERSION" ]; then
-  PROJECT_NAME="$TEAMCITY_PROJECT_NAME"
-fi
-
 if [ "$DEPLOYMENT_STATUS" = "successful" ]; then
   MSG=":rocket: Deployment Succeeded"
   COLOR="good"

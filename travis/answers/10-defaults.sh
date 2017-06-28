@@ -7,6 +7,7 @@ REPO_STUB=$(sh ./scripts/ci-deployment/travis/get-repo-name.sh)
   echo "RANCHER_STACK_NAME=${REPO_STUB}"
   echo "DEPLOY_URL='${REPO_STUB}.${TRAEFIK_DOMAIN-dev.beta.nhschoices.net}'"
   echo "REPO_NAME=$REPO_STUB"
+  echo "PROJECT_NAME=$REPO_STUB"
   echo "RANCHER_DESCRIPTION=github/${TRAVIS_REPO_SLUG}"
 } >> answers.txt
 
