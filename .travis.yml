@@ -1,7 +1,5 @@
 language: bash
 
-sudo: required
-
 addons:
   apt:
     sources:
@@ -11,9 +9,3 @@ addons:
 
 script:
  - bash -c 'shopt -s nullglob globstar; shellcheck **/*.{sh,bash}'
-
-services:
-  - docker
-
-after_success:
-  - bash ./scripts/ci-deployment/deploy.sh

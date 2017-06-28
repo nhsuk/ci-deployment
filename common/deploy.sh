@@ -24,6 +24,7 @@ echo "Deploying rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRO
 
 pushd rancher-config/ > /dev/null
 # ACTUALLY DEPLOY NOW
+# shellcheck disable=SC2034
 RANCHER_OUTPUT=$(../rancher \
   --wait \
     up  -p \
