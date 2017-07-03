@@ -65,8 +65,7 @@ remove_review:
     RANCHER_ENVIRONMENT: nhsuk-dev
     REVIEW_APP: "TRUE"
   script:
-    - sh ./scripts/ci-deployment/common/install-rancher.sh
-    - sh ./scripts/ci-deployment/gitlab/remove-review-app.sh
+    - bash ./scripts/ci-deployment/gitlab/remove-review-app.sh
   when: manual
   environment:
     name: review/${CI_COMMIT_REF_NAME}

@@ -14,6 +14,15 @@ check_rancher_vars() {
 
 }
 
+bash ./scripts/ci-deployment/common/install-rancher.sh
+bash ./scripts/ci-deployment/common/generate-answers.sh
+
+# EXPORT ALL THE VARIABLES FROM THE GENERATED ANSWERS FILE
+set -o allexport
+# shellcheck source=/dev/null
+source answers.txt
+set +o allexport
+
 check_rancher_vars
 
 rancher --wait rm "${RANCHER_STACK_NAME}"
