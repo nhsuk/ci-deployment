@@ -43,6 +43,10 @@ if [ -d "./scripts/answers.d" ]; then
   done
 fi
 
+# Always skip the deployment if flag set
+if [ "$SKIP_DEPLOY" = "true" ]; then
+  echo "DEPLOY_BUILD=false" >> answers.txt
+fi
 
 # ENSURE answers.txt isn't in the Dockerfile!
 echo "answers.txt" >> .dockerignore
