@@ -25,4 +25,4 @@ set +o allexport
 
 check_rancher_vars
 
-rancher --wait rm "${RANCHER_STACK_NAME}"
+./rancher --wait rm "${RANCHER_STACK_NAME}"
