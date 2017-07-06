@@ -6,4 +6,6 @@
   echo "RANCHER_URL=https://${RANCHER_SERVER-rancher.nhschoices.net}/v2-beta/schemas"
   echo "RANCHER_ENVIRONMENT=${RANCHER_ENVIRONMENT-nhsuk-dev}"
   echo "TRAEFIK_DOMAIN=${TRAEFIK_DOMAIN-dev.beta.nhschoices.net}"
+  echo "NOTIFICATION_METHOD=slack"
+  echo "WEB_EXPOSE=${WEB_EXPOSE-true}"
 } >> answers.txt

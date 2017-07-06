@@ -18,61 +18,36 @@ check_rancher_vars() {
 
 }
 
-deploy() {
+check_rancher_vars
 
-  check_rancher_vars
+echo "Deploying rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRONMENT"
 
-  echo "Building rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRONMENT"
+pushd rancher-config/ > /dev/null
+# ACTUALLY DEPLOY NOW
+# shellcheck disable=SC2034
+RANCHER_OUTPUT=$(../rancher \
+  --wait \
+    up  -p \
+        -d \
+        --upgrade \
+        --force-upgrade \
+        --confirm-upgrade \
+        --stack "${RANCHER_STACK_NAME}")
 
-  pushd rancher-config/ > /dev/null
-  # ACTUALLY DEPLOY NOW
-  ../rancher \
-    --wait \
-      up  -p \
-          -d \
-          --upgrade \
-          --force-upgrade \
-          --confirm-upgrade \
-          --stack "${RANCHER_STACK_NAME}"
+# shellcheck disable=SC2181
+if [ $? -eq 0 ]; then
+  export DEPLOYMENT_STATUS="successful"
+else
+  export DEPLOYMENT_STATUS="failed"
+fi
+popd > /dev/null
 
-  # shellcheck disable=SC2181
-  if [ $? -eq 0 ] ; then
-    DEPLOYMENT_SUCCEEDED="true"
-  else
-    DEPLOYMENT_SUCCEEDED="false"
-  fi
-  popd > /dev/null
+# SET STACK DESCRIPTION
+bash ./scripts/ci-deployment/common/set-stack-description.sh "$RANCHER_DESCRIPTION"
 
-  # SET STACK DESCRIPTION
-  bash ./scripts/ci-deployment/common/set-stack-description.sh "$RANCHER_DESCRIPTION"
-
-  # PUSH NOTIFICATION TO SLACK OR GITHUB
-  MSG=$(bash ./scripts/ci-deployment/common/deployment-msg.sh "$DEPLOYMENT_SUCCEEDED")
-  echo "$MSG"
-  if [ "$NOTIFY_METHOD" = "slack" ]; then
-    bash ./scripts/ci-deployment/common/post-comment-to-slack.sh "$MSG"
-  elif [ "$NOTIFY_METHOD" = "github" ]; then
-    bash ./scripts/ci-deployment/travis/post-comment-to-github-pr.sh "$MSG"
-  fi
-
-}
-
-
-# TRAVIS: ONLY DEPLOY ON PRS AND MASTER
-if [ "$TRAVIS" = "true" ]; then
-  if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    export NOTIFY_METHOD="github"
-    deploy
-  elif [ "$TRAVIS_BRANCH" = "master" ]; then
-    export NOTIFY_METHOD="slack"
-    deploy
-  fi
-# GITLAB CI: THIS WILL HAVE BEEN TRIGGERED, SO ALWAYS DEPLOY
-elif [ -n "$GITLAB_CI" ]; then
-  export NOTIFY_METHOD="slack"
-  deploy
-# TEAMCITY: USED TO PROMOTE RELEASES TO STAGING/PRODUCTION
-elif [ -n "$TEAMCITY_VERSION" ]; then
-  export NOTIFY_METHOD="slack"
-  deploy
+# PUSH NOTIFICATION TO SLACK OR GITHUB
+if [ "$NOTIFICATION_METHOD" = "slack" ]; then
+  bash ./scripts/ci-deployment/common/post-comment-to-slack.sh
+elif [ "$NOTIFICATION_METHOD" = "github" ]; then
+  bash ./scripts/ci-deployment/travis/post-comment-to-github-pr.sh
 fi

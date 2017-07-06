@@ -3,8 +3,10 @@
 # SET SOME SANE DEFAULTS
 {
   echo "RANCHER_STACK_NAME=${CI_PROJECT_NAME}"
+  echo "PROJECT_NAME=${CI_PROJECT_NAME}"
   echo "DEPLOY_URL='${CI_PROJECT_NAME}.${CI_ENVIRONMENT_NAME}.beta.nhschoices.net'"
   echo "RANCHER_DESCRIPTION='${CI_REPOSITORY_URL}'"
+  echo "DEPLOY_BUILD=true"
 } >> answers.txt
 
 # TAG BUILDS
@@ -15,9 +17,10 @@ elif [ "$CI_COMMIT_REF_SLUG" = "master" ]; then
   echo "DOCKER_IMAGE_TAG=latest" >> answers.txt
 else
   # IT'S A BRANCH
-  # shellcheck disable=2129
-  echo "DEPLOY_URL='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.dev.beta.nhschoices.net'" >> answers.txt
-  echo "RANCHER_STACK_NAME='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}'" >> answers.txt
-  echo "DOCKER_IMAGE_TAG=${CI_COMMIT_REF_SLUG}" >> answers.txt
-  echo "RANCHER_DESCRIPTION='(${CI_COMMIT_REF_SLUG}) (gitlab/${CI_PROJECT_PATH})'" >> answers.txt
+  {
+    echo "DEPLOY_URL='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.dev.beta.nhschoices.net'"
+    echo "RANCHER_STACK_NAME='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}'"
+    echo "DOCKER_IMAGE_TAG=${CI_COMMIT_REF_SLUG}"
+    echo "RANCHER_DESCRIPTION='(${CI_COMMIT_REF_SLUG}) (gitlab/${CI_PROJECT_PATH})'"
+  } >> answers.txt
 fi

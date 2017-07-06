@@ -15,4 +15,6 @@ if [ "$TRAVIS" = "true" ]; then
   bash ./scripts/ci-deployment/travis/build-docker-images.sh
 fi
 
-bash ./scripts/ci-deployment/common/deploy.sh
+if [ "$DEPLOY_BUILD" = "true" ]; then
+  bash ./scripts/ci-deployment/common/deploy.sh
+fi
