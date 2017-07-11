@@ -9,6 +9,7 @@ REPO_STUB=$(sh ./scripts/ci-deployment/travis/get-repo-name.sh)
   echo "REPO_NAME=$REPO_STUB"
   echo "PROJECT_NAME=$REPO_STUB"
   echo "RANCHER_DESCRIPTION=github/${TRAVIS_REPO_SLUG}"
+  echo "DEPLOY_BUILD=true"
 } >> answers.txt
 
 # IF PR, DEPLOY TO DEV ENV
@@ -24,6 +25,5 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
 
 # IF MASTER, DEPLOY TO DEV ENV
 elif [ "$TRAVIS_BRANCH" = "master" ]; then
-  echo "DEPLOY_BUILD=true"
-  echo "DOCKER_IMAGE_TAG=latest" | tee --append answers.txt
+  echo "DOCKER_IMAGE_TAG=latest" >> answers.txt
 fi
