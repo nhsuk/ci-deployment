@@ -21,7 +21,7 @@ git clone https://github.com/nhsuk/ci-deployment.git scripts/ci-deployment
 bash ./scripts/ci-deployment/deploy.sh
 ```
 2. Add a `docker-compose.yml` and optionally, a `rancher-compose.yml` file to `./rancher-config/`, located in the root of the project
-3. **(Travis only)** Update the target repo's `.travis.yml` to include the sections included within the example `.travis.yml` in this repo (see [travis/.travis-ci.yaml.example](https://github.com/nhsuk/ci-deployment/blob/master/travis/.travis.yml.example))
+3. **(Travis only)** Update the target repo's `.travis.yml` to include the sections included within the example `.travis.yml` in this repo (see [travis/.travis.yaml.example](travis/.travis.yml.example))
     - Setup Travis for the repo. Include all [environment variables](https://docs.travis-ci.com/user/environment-variables/#Defining-Variables-in-Repository-Settings) not already available within the Travis environment (described below)
 4. **(GitlabCI only)** Update the target repo's `.gitlab-ci.yml` to include the sections included with the example `.gitlab-ci.yml` in this repo
     - Setup Gitlab CI for the repo. Include all [environment variables](https://docs.gitlab.com/ee/ci/variables/)
