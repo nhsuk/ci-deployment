@@ -4,9 +4,7 @@
 
 This repo contains deployment scripts that are intended to be executed during the build stage on either [Travis CI](https://travis-ci.org) or [Gitlab CI](https://about.gitlab.com/features/gitlab-ci-cd/).
 
-In order for the scripts to function correctly a number of steps must be taken to configure the repo which is to make use of the deployment scripts. Steps include adding this repo as a [Git submodule](https://git-scm.com/docs/git-submodule) along with configuration of a number of files.
-
-Including this repo within your own will:
+The following steps are run when the `deploy.sh` script executes:
 * Build and tag the Docker image as detailed in the repo's `Dockerfile`. This happens on PR creation/update, tagging (including releases), and commits to the `master` branch
 * Push the image to the appropriate docker repo (`nhsuk/$REPO_STUB`)
 * If the build has been triggered by a PR a new stack will be created within the `nhsuk-dev` environment on the Rancher server based on the `docker-compose.yml` and `rancher-compose.yml` files found in `./rancher-config/`
@@ -16,6 +14,13 @@ Including this repo within your own will:
 ## Setup in code repo
 
 1. Add this repo as a submodule into `./scripts/` (if the directory doesn't exist, it will need to be created). To include the submodule run `git submodule add https://github.com/nhsuk/ci-deployment.git scripts/ci-deployment`
+1. Create an executable `scripts/deploy.sh` file with the following contents:
+```
+#!/bin/sh
+
+git clone https://github.com/nhsuk/ci-deployment.git scripts/ci-deployment
+bash ./scripts/ci-deployment/deploy.sh
+```
 2. Add a `docker-compose.yml` and optionally, a `rancher-compose.yml` file to `./rancher-config/`, located in the root of the project
 3. **(Travis only)** Update the target repo's `.travis.yml` to include the sections included within the example `.travis.yml` in this repo
     - Setup Travis for the repo. Include all [environment variables](https://docs.travis-ci.com/user/environment-variables/#Defining-Variables-in-Repository-Settings) not already available within the Travis environment (described below)
