@@ -3,6 +3,13 @@
 # INSTALL RANCHER
 bash ./common/install-rancher.sh
 
+bash ./common/generate-answers.sh
+
+# EXPORT ALL THE VARIABLES FROM THE GENERATED ANSWERS FILE
+set -o allexport
+# shellcheck source=/dev/null
+source answers.txt
+set +o allexport
 
 # EMULATE GITLAB_CI DEPLOY TO MASTER
 GITLAB_CI=true \
