@@ -9,3 +9,4 @@ addons:
 
 script:
  - bash -c 'shopt -s nullglob globstar; shellcheck **/*.{sh,bash}'
+ - bash test.sh
