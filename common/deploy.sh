@@ -23,19 +23,10 @@ check_rancher_vars
 echo "Deploying rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRONMENT"
 
 pushd rancher-config/ > /dev/null
-# ACTUALLY DEPLOY NOW
-# shellcheck disable=SC2034
-../rancher \
-  --wait \
-    up  -p \
-        -d \
-        --upgrade \
-        --force-upgrade \
-        --confirm-upgrade \
-        --stack "${RANCHER_STACK_NAME}"
 
-# shellcheck disable=SC2181
-if [ $? -eq 0 ]; then
+
+# ACTUALLY DEPLOY NOW (SEE RANCHER UP --HELP)
+if [ ../rancher -w up --force-upgrade -pducs "${RANCHER_STACK_NAME}" ]; then
   export DEPLOYMENT_STATUS="successful"
 else
   export DEPLOYMENT_STATUS="failed"
