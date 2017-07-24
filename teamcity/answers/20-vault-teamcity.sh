@@ -13,7 +13,7 @@ get_vault_data() {
         "https://${VAULT_SERVER}${VAULT_PATH}" \
     )
   fi
-  echo "$DATA" | jq -r '.data | to_entries[] | (.key+"=\""+.value+"\"")' >> answers.txt
+  echo "$DATA" | jq -r '.data | to_entries[] | [ .key, .value|tostring ] | (.[0]+"=\""+.[1]+"\"")' >> answers.txt
 
 }
 
