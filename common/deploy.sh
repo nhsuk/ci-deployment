@@ -26,7 +26,7 @@ pushd rancher-config/ > /dev/null
 
 
 # ACTUALLY DEPLOY NOW (SEE RANCHER UP --HELP)
-if [ ../rancher -w up --force-upgrade -p -d -u -c -s "${RANCHER_STACK_NAME}" ]; then
+if ../rancher -w up --force-upgrade -p -d -u -c -s "${RANCHER_STACK_NAME}"; then
   export DEPLOYMENT_STATUS="successful"
 else
   export DEPLOYMENT_STATUS="failed"
