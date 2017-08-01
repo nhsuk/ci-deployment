@@ -5,7 +5,7 @@
   echo "RANCHER_STACK_NAME=${CI_PROJECT_NAME}"
   echo "PROJECT_NAME=${CI_PROJECT_NAME}"
   echo "DEPLOY_URL='${CI_PROJECT_NAME}.${CI_ENVIRONMENT_NAME}.beta.nhschoices.net'"
-  echo "RANCHER_DESCRIPTION='${CI_REPOSITORY_URL}'"
+  echo "RANCHER_DESCRIPTION='gitlab/${CI_PROJECT_PATH}'"
   echo "DEPLOY_BUILD=true"
 } >> answers.txt
 
