@@ -19,7 +19,7 @@ fi
 if [ "$DEPLOYMENT_STATUS" = "successful" ]; then
   MSG=":rocket: deployment of $REPO succeeded $URL"
 else
-  MSG=":warning: deployment of $REPO failed"
+  MSG=":boom: deployment of $REPO failed"
 fi
 
 PAYLOAD="{\"body\": \"${MSG}\" }"
