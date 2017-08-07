@@ -24,7 +24,7 @@ echo "Deploying rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRO
 
 export DEPLOYMENT_STATUS="pending"
 if [ "$NOTIFICATION_METHOD" = "github" ]; then
-  bash ./scripts/ci-deployment/travis/post-comment-to-github-pr.sh "pending"
+  bash ./scripts/ci-deployment/travis/post-comment-to-github-pr.sh
 fi 
 
 pushd rancher-config/ > /dev/null

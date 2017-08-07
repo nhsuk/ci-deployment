@@ -32,7 +32,7 @@ PAYLOAD="{
   \"state\": \"${STATUS}\",
   \"target_url\": \"${URL}\",
   \"description\":  \"${MSG}\",
-  \"context\": \"Deployment/rancher\"
+  \"context\": \"deployment/rancher\"
 }"
 
 PULL_REQUESTS_URL="https://api.github.com/repos/${REPO}/pulls/$PULL_REQUEST"
