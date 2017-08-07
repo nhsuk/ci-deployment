@@ -22,6 +22,11 @@ check_rancher_vars
 
 echo "Deploying rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRONMENT"
 
+export DEPLOYMENT_STATUS="pending"
+if [ "$NOTIFICATION_METHOD" = "github" ]; then
+  bash ./scripts/ci-deployment/travis/post-comment-to-github-pr.sh "pending"
+fi 
+
 pushd rancher-config/ > /dev/null
 
 

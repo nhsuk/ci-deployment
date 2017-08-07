@@ -8,27 +8,26 @@ if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
   exit 1
 fi
 
+MSG="Deployment of $REPO"
+if [ "$DEPLOYMENT_STATUS" = "pending" ]; then
+  MSG="$MSG pending"
+  STATUS="$DEPLOYMENT_STATUS"
+elif [ "$DEPLOYMENT_STATUS" = "successful" ]; then
+  MSG="$MSG succeeded"
+  STATUS="success"
+elif [ "$DEPLOYMENT_STATUS" = "fail" ]; then
+  MSG="$MSG failed"
+  STATUS="failure"
+else
+  exit 1
+fi
 
-# IF SERVICE IS SET TO EXPOSE, APPEND THE URL TO THE MESSAGE
-if [ "$WEB_EXPOSE" = "true" ]; then
+if [ "$WEB_EXPOSE" = "true" ] && [ "$STATUS" = "success" ]; then
   URL="https://$DEPLOY_URL"
 else
   URL=""
 fi
 
-MSG="Deployment of $REPO"
-if [ "$DEPLOYMENT_STATUS" = "successful" ]; then
-  MSG="$MSG succeeded"
-  STATUS="success"
-else
-  MSG="$MSG failed"
-  STATUS="failure"
-fi
-
-PULL_REQUESTS_URL="https://api.github.com/repos/${REPO}/pulls/$PULL_REQUEST"
-echo "$PULL_REQUESTS_URL"
-
-SHA=$(curl -s "$PULL_REQUESTS_URL"| jq --raw-output '.head.sha')
 PAYLOAD="{
   \"state\": \"${STATUS}\",
   \"target_url\": \"${URL}\",
@@ -36,8 +35,8 @@ PAYLOAD="{
   \"context\": \"Deployment/rancher\"
 }"
 
-echo "${PAYLOAD}" 
-echo "https://api.github.com/repos/${REPO}/statuses/${SHA}"
+PULL_REQUESTS_URL="https://api.github.com/repos/${REPO}/pulls/$PULL_REQUEST"
+SHA=$(curl -s "$PULL_REQUESTS_URL"| jq --raw-output '.head.sha')
 
 GITHUB_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -d "${PAYLOAD}" "https://api.github.com/repos/${REPO}/statuses/${SHA}?access_token=${GITHUB_ACCESS_TOKEN}")
 
