@@ -16,11 +16,12 @@ else
   URL=""
 fi
 
+MSG="Deployment of $REPO"
 if [ "$DEPLOYMENT_STATUS" = "successful" ]; then
-  MSG=":rocket: deployment of $REPO succeeded $URL"
+  MSG="$MSG succeeded"
   STATUS="success"
 else
-  MSG=":boom: deployment of $REPO failed"
+  MSG="$MSG failed"
   STATUS="failure"
 fi
 
@@ -31,7 +32,7 @@ SHA=$(curl -s "$PULL_REQUESTS_URL"| jq --raw-output '.head.sha')
 PAYLOAD="{
   \"state\": \"${STATUS}\",
   \"target_url\": \"${URL}\",
-  \"description\": \"Deployment of ${REPO}.\",
+  \"description\":  \"${MSG}\",
   \"context\": \"Deployment/rancher\"
 }"
 
