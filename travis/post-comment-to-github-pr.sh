@@ -10,7 +10,7 @@ fi
 
 MSG="Deployment of $REPO"
 if [ "$DEPLOYMENT_STATUS" = "pending" ]; then
-  MSG="$MSG pending"
+  MSG="$MSG in progress"
   STATUS="$DEPLOYMENT_STATUS"
 elif [ "$DEPLOYMENT_STATUS" = "successful" ]; then
   MSG="$MSG succeeded"

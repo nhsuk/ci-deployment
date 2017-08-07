@@ -25,6 +25,8 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
 
 # IF MASTER, DEPLOY TO DEV ENV
 elif [ "$TRAVIS_BRANCH" = "master" ]; then
-  echo "DEPLOY_BUILD=true"
-  echo "DOCKER_IMAGE_TAG=latest" >> answers.txt
+  {
+    echo "DEPLOY_BUILD=true"
+    echo "DOCKER_IMAGE_TAG=latest"
+  } >> answers.txt
 fi
