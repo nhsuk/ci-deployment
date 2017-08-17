@@ -13,12 +13,11 @@ The following steps are run when the `deploy.sh` script executes:
 
 ## Setup in code repo
 
-1. Create an executable `scripts/deploy.sh` file with the following contents:
+1. Create an executable `scripts/get-ci-scripts.sh` file with the following contents:
 ```
 #!/bin/sh
 
 git clone https://github.com/nhsuk/ci-deployment.git scripts/ci-deployment
-bash ./scripts/ci-deployment/deploy.sh
 ```
 2. Add a `docker-compose.yml` and optionally, a `rancher-compose.yml` file to `./rancher-config/`, located in the root of the project
 3. **(Travis only)** Update the target repo's `.travis.yml` to include the sections included within the example `.travis.yml` in this repo (see [travis/.travis.yaml.example](travis/.travis.yml.example))
