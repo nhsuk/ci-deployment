@@ -6,7 +6,7 @@ set -e          #Exit with error code if any command fails
 
 check_rancher_vars() {
 
-  RANCHER_ENVS="RANCHER_URL RANCHER_ENVIRONMENT RANCHER_ACCESS_KEY RANCHER_SECRET_KEY"
+  RANCHER_ENVS="RANCHER_ENVIRONMENT RANCHER_ACCESS_KEY RANCHER_SECRET_KEY"
 
   for i in $RANCHER_ENVS; do
     VALUE=$(eval "echo \$$i")
