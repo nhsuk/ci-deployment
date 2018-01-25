@@ -22,10 +22,14 @@ check_rancher_vars
 
 echo "Deploying rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRONMENT"
 
+
+# Set RANCHER_URL, doing it here so we can set RANCHER_SERVER in Vault
+echo "RANCHER_URL=https://${RANCHER_SERVER}/v2-beta/schemas"
+
 export DEPLOYMENT_STATUS="pending"
 if [ "$NOTIFICATION_METHOD" = "github" ]; then
   bash ./scripts/ci-deployment/travis/post-comment-to-github-pr.sh
-fi 
+fi
 
 pushd rancher-config/ > /dev/null
 
