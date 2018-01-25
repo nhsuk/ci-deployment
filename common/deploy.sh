@@ -24,7 +24,7 @@ echo "Deploying rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRO
 
 
 # Set RANCHER_URL, doing it here so we can set RANCHER_SERVER in Vault
-echo "RANCHER_URL=https://${RANCHER_SERVER}/v2-beta/schemas"
+export RANCHER_URL=https://${RANCHER_SERVER}/v2-beta/schemas
 
 export DEPLOYMENT_STATUS="pending"
 if [ "$NOTIFICATION_METHOD" = "github" ]; then
