@@ -2,7 +2,7 @@
 
 check_rancher_vars() {
 
-  RANCHER_ENVS="RANCHER_URL RANCHER_ENVIRONMENT RANCHER_ACCESS_KEY RANCHER_SECRET_KEY"
+  RANCHER_ENVS="RANCHER_ENVIRONMENT RANCHER_ACCESS_KEY RANCHER_SECRET_KEY"
 
   for i in $RANCHER_ENVS; do
     VALUE=$(eval "echo \$$i")
@@ -28,6 +28,10 @@ set +o allexport
 # REMOVE RANCHER ENVIRONMENT
 
 check_rancher_vars
+
+# Set RANCHER_URL, doing it here so we can set RANCHER_SERVER in Vault
+export RANCHER_URL=https://${RANCHER_SERVER}/v2-beta/schemas
+
 ./rancher --wait rm "${RANCHER_STACK_NAME}"
 
 # RUN REPO SPECIFIC REMOVAL SCRIPTS, IF DIRECTORY EXISTS
