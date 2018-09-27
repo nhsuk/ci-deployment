@@ -13,7 +13,7 @@
 if [ -n "${CI_COMMIT_TAG}" ]; then
   echo "DOCKER_IMAGE_TAG=${CI_COMMIT_TAG}" >> answers.txt
 # INTEGRATION BUILD
-elif [ "$CI_COMMIT_REF_SLUG" = "master" ]; then
+elif [ "$CI_COMMIT_REF_SLUG" = "master" -o "$CI_COMMIT_REF_SLUG" = "develop "]; then
   echo "DOCKER_IMAGE_TAG=latest" >> answers.txt
 else
   # IT'S A BRANCH
