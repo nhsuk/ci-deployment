@@ -1,4 +1,4 @@
-if [ "$PROTOTYPE" == "TRUE" ]; then
+if [ "$BRANCH_BUILD" == "TRUE" ]; then
   {
     host="${CI_PROJECT_NAME//_/-}-${CI_COMMIT_REF_SLUG//_/-}"
     domain="dev.beta.nhschoices.net"
