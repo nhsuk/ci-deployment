@@ -4,8 +4,8 @@
 echo "" > answers.txt
 
 # LOAD ALL COMMON ANSWER FILES, IF DIRECTORY EXISTS
-if [ -d "./scripts/ci-deployment/common/answers" ]; then
-  for f in ./scripts/ci-deployment/common/answers/*; do
+if [ -d "common/answers" ]; then
+  for f in common/answers/*; do
     echo "Loading answers from $f"
     # shellcheck source=/dev/null
     . "$f"
@@ -28,8 +28,8 @@ export CI_TOOL
 echo "CI_TOOL=$CI_TOOL" >> answers.txt
 
 # LOAD CI TOOL SPECIFIC ANSWER FILES, IF DIRECTORY EXISTS
-if [ -d "./scripts/ci-deployment/${CI_TOOL}/answers" ]; then
-  for f in ./scripts/ci-deployment/${CI_TOOL}/answers/*; do
+if [ -d "${CI_TOOL}/answers" ]; then
+  for f in ${CI_TOOL}/answers/*; do
     echo "Loading answers from $f"
     # shellcheck source=/dev/null
     . "$f"

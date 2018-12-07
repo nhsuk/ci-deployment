@@ -43,11 +43,11 @@ fi
 popd > /dev/null
 
 # SET STACK DESCRIPTION
-bash ./scripts/ci-deployment/common/set-stack-description.sh "$RANCHER_DESCRIPTION"
+bash common/set-stack-description.sh "$RANCHER_DESCRIPTION"
 
 # PUSH NOTIFICATION TO SLACK OR GITHUB
 if [ "$NOTIFICATION_METHOD" = "slack" ]; then
-  bash ./scripts/ci-deployment/common/post-comment-to-slack.sh
+  bash common/post-comment-to-slack.sh
 elif [ "$NOTIFICATION_METHOD" = "github" ]; then
   bash ./scripts/ci-deployment/travis/post-comment-to-github-pr.sh
 fi
