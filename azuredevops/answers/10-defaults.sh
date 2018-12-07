@@ -13,6 +13,6 @@
 if [ -n "${BUILD_BUILDNUMBER}" ]; then
   echo "DOCKER_IMAGE_TAG=${BUILD_BUILDNUMBER}" >> answers.txt
 # INTEGRATION BUILD
-else [ "$BUILD_SOURCEBRANCHNAME" = "master" ]; then
+else [ "$BUILD_SOURCEBRANCHNAME" = "master" ];
   echo "DOCKER_IMAGE_TAG=latest" >> answers.txt
 fi
