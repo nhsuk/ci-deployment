@@ -19,6 +19,8 @@ elif [ "$TRAVIS" = "true" ]; then
   CI_TOOL="travis"
 elif [ -n "$TEAMCITY_VERSION" ]; then
   CI_TOOL="teamcity"
+elif [ "$RELEASE_RELEASEURI" = "vstfs*" ]; then
+  CI_TOOL="azuredevops"
 else
   CI_TOOL="manual"
 fi
