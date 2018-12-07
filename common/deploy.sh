@@ -18,7 +18,7 @@ check_rancher_vars() {
 
 }
 
-check_rancher_vars
+#check_rancher_vars
 
 echo "Deploying rancher stack $RANCHER_STACK_NAME in environment $RANCHER_ENVIRONMENT"
 
