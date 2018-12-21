@@ -10,4 +10,7 @@
 } >> answers.txt
 
 # TEAMCITY ONLY USED FOR PROMOTING TAGS TO STAGING/PRODUCTION
+if [ -n "$BUILD_TAG" ]; then
+  BUILD_TAG=($BUILD_BRANCH | sed 's/\W/-/g')
+fi
 echo "DOCKER_IMAGE_TAG=${BUILD_TAG}" >> answers.txt
