@@ -10,9 +10,9 @@
 } >> answers.txt
 
 # TEAMCITY ONLY USED FOR PROMOTING TAGS TO STAGING/PRODUCTION
-if [ -n "${BUILD_TAG}" ]; then
+#if [ -n "${BUILD_TAG}" ]; then
   echo ${BUILD_BRANCH}
   BUILD_TAG=$(echo ${BUILD_BRANCH} | sed 's/\W/-/g')
-fi
+#fi
 echo ${BUILD_TAG}
 echo "DOCKER_IMAGE_TAG=${BUILD_TAG}" >> answers.txt
