@@ -30,13 +30,8 @@ if [ -z "$VAULT_TOKEN" ]; then
 fi
 
 if [ "$SKIP" != "1" ]; then
-
-  if [ "$REVIEW_APP" == "TRUE" ]; then
-    ENVIRONMENT="review"
-  else
-    ENVIRONMENT="$CI_ENVIRONMENT_NAME"
-  fi
-
+  # Set the correct environment
+  ENVIRONMENT="$CI_ENVIRONMENT_NAME"
 
   # GET DEFAULT VARIABLES
   VAULT_PATH="/v1/secret/defaults"
