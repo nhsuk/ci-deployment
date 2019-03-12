@@ -4,7 +4,13 @@
 {
   echo "RANCHER_STACK_NAME=${CI_PROJECT_NAME}"
   echo "PROJECT_NAME=${CI_PROJECT_NAME}"
-  echo "DEPLOY_URL='${CI_PROJECT_NAME}.${CI_ENVIRONMENT_NAME}.beta.nhschoices.net'"
+  if [ "$CI_ENVIRONMENT_NAME" = "dev" ]; then
+    echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
+  elif [ "$CI_ENVIRONMENT_NAME" = "integration" ]; then
+    echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
+  elif [ "$CI_ENVIRONMENT_NAME" = "staging" ]; then
+    echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-staging.nhs.uk'"
+  fi
   echo "RANCHER_DESCRIPTION='gitlab/${CI_PROJECT_PATH}'"
   echo "DEPLOY_BUILD=true"
 } >> answers.txt
@@ -18,7 +24,13 @@ elif [ "$CI_COMMIT_REF_SLUG" = "master" ]; then
 else
   # IT'S A BRANCH
   {
-    echo "DEPLOY_URL='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.dev.beta.nhschoices.net'"
+  if [ "$CI_ENVIRONMENT_NAME" = "dev" ]; then
+    echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
+  elif [ "$CI_ENVIRONMENT_NAME" = "integration" ]; then
+    echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
+  elif [ "$CI_ENVIRONMENT_NAME" = "staging" ]; then
+    echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-staging.nhs.uk'"
+  fi
     echo "RANCHER_STACK_NAME='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}'"
     echo "DOCKER_IMAGE_TAG=${CI_COMMIT_REF_SLUG}"
     echo "RANCHER_DESCRIPTION='(${CI_COMMIT_REF_SLUG}) (gitlab/${CI_PROJECT_PATH})'"

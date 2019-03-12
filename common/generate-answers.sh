@@ -27,7 +27,7 @@ echo "CI_TOOL=$CI_TOOL" >> answers.txt
 
 # LOAD CI TOOL SPECIFIC ANSWER FILES, IF DIRECTORY EXISTS
 if [ -d "./scripts/ci-deployment/${CI_TOOL}/answers" ]; then
-  for f in ./scripts/ci-deployment/${CI_TOOL}/answers/*; do
+  for f in ./scripts/ci-deployment/"${CI_TOOL}"/answers/*; do
     echo "Loading answers from $f"
     # shellcheck source=/dev/null
     . "$f"

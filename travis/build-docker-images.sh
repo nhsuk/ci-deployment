@@ -7,25 +7,25 @@ DOCKER_REPO="${DOCKER_HUB}/${REPO_SLUG}"
 TAGS=""
 
 info() {
-  printf "%s\n" "$@"
+  printf "%s\\n" "$@"
 }
 
 fatal() {
-  printf "**********\n"
-  printf "%s\n" "$@"
-  printf "**********\n"
+  printf "**********\\n"
+  printf "%s\\n" "$@"
+  printf "**********\\n"
   exit 1
 }
 
 fold_start() {
   if [ -n "$TRAVIS" ]; then
-    printf "%s\n" "travis_fold:start:$*"
+    printf "%s\\n" "travis_fold:start:$*"
   fi
 }
 
 fold_end() {
   if [ -n "$TRAVIS" ]; then
-    printf "%s\n" "travis_fold:end:$*"
+    printf "%s\\n" "travis_fold:end:$*"
   fi
 }
 
