@@ -20,7 +20,7 @@ bash ./scripts/ci-deployment/common/generate-answers.sh
 # EXPORT ALL THE VARIABLES FROM THE GENERATED ANSWERS FILE
 set -o allexport
 # shellcheck source=/dev/null
-source answers.txt
+. answers.txt
 set +o allexport
 
 

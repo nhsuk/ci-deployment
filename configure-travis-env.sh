@@ -28,7 +28,7 @@ setPublicValue() {
 }
 
 displayMessage() {
-  printf "\n%s (%s)\n\n" \
+  printf "\\n%s (%s)\\n\\n" \
     "${grn}${1} Environment Variables${end}" \
     "${blu}Enter a value or press return to leave the value unchanged${end}"
 }
@@ -37,7 +37,7 @@ displayMessage() {
 public_values="VAULT_SERVER"
 private_values="VAULT_TOKEN"
 
-printf "${mag}The current environment variables are:${end}\n\n"
+printf "${mag}The current environment variables are:${end}\\n\\n"
 travis env list
 
 displayMessage "Private"
