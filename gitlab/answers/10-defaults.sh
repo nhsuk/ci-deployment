@@ -8,7 +8,7 @@
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
   elif [ "$CI_ENVIRONMENT_NAME" = "integration" ]; then
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
-  else [ "$CI_ENVIRONMENT_NAME" = "staging" ]; then
+  elif [ "$CI_ENVIRONMENT_NAME" = "staging" ]; then
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-staging.nhs.uk'"
   fi
   echo "RANCHER_DESCRIPTION='gitlab/${CI_PROJECT_PATH}'"
@@ -28,7 +28,7 @@ else
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
   elif [ "$CI_ENVIRONMENT_NAME" = "integration" ]; then
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
-  else [ "$CI_ENVIRONMENT_NAME" = "staging" ]; then
+  elif [ "$CI_ENVIRONMENT_NAME" = "staging" ]; then
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-staging.nhs.uk'"
   fi
     echo "RANCHER_STACK_NAME='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}'"
