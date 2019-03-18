@@ -6,6 +6,8 @@
   echo "PROJECT_NAME=${CI_PROJECT_NAME}"
   if [ "$CI_ENVIRONMENT_NAME" = "dev" ]; then
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
+  elif [ "$CI_ENVIRONMENT_NAME" = "review" ]; then
+    echo "DEPLOY_URL='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.nhswebsite-integration.nhs.uk'"
   elif [ "$CI_ENVIRONMENT_NAME" = "integration" ]; then
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
   elif [ "$CI_ENVIRONMENT_NAME" = "staging" ]; then
@@ -26,6 +28,8 @@ else
   {
   if [ "$CI_ENVIRONMENT_NAME" = "dev" ]; then
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
+  elif [ "$CI_ENVIRONMENT_NAME" = "review" ]; then
+    echo "DEPLOY_URL='${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.nhswebsite-integration.nhs.uk'"
   elif [ "$CI_ENVIRONMENT_NAME" = "integration" ]; then
     echo "DEPLOY_URL='${CI_PROJECT_NAME}.nhswebsite-integration.nhs.uk'"
   elif [ "$CI_ENVIRONMENT_NAME" = "staging" ]; then
