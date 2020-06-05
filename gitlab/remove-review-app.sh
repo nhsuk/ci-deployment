@@ -6,7 +6,7 @@ check_rancher_vars() {
 
   for i in $RANCHER_ENVS; do
     VALUE=$(eval "echo \$$i")
-    if [ ! -n "$VALUE" ]; then
+    if [ -z "$VALUE" ]; then
       echo "RANCHER ENV VARIABLE $i NOT SET!"
       exit 1
     fi
