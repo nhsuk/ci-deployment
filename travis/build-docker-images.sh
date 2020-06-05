@@ -78,6 +78,9 @@ if [ "$TAGS" != "" ]; then
   fold_start "Building_Default_Image"
   info "Building default image"
 
+  # Delete answers.txt before building docker image to ensure secrets aren't leaked into the image
+  rm answers.txt
+
   if docker build -t "${REPO_SLUG}" .; then
     info "Build succeeded."
   else
