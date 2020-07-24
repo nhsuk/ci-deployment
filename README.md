@@ -32,7 +32,7 @@ For environment variables that are not CI specific an instance of [Vault](https:
 
 | Variable       | Secret | Description                | Default                | Add to Travis? | Add to Gitlab CI? |
 | :---           | :---   | :---                       | :---                   | :---           | :---              |
-| `VAULT_SERVER` | NO     | DNS name for vault server  | `vault.nhschoices.net` | YES            | YES               |
+| `VAULT_SERVER` | NO     | DNS name for vault server  | `vault.nhswebsite.nhs.uk` | YES            | YES               |
 | `VAULT_TOKEN`  | YES    | Token used to access Vault |                        | YES            | YES               |
 | `SKIP_DEPLOY`  | NO | If set to `true`, Rancher deployments are skipped | | YES | YES |
 | `WEB_EXPOSE`   | NO | Whether the service is exposed externally, sets the load balancer options if so | `true` | YES | YES |
