@@ -32,7 +32,8 @@ check_rancher_vars
 # Set RANCHER_URL, doing it here so we can set RANCHER_SERVER in Vault
 export RANCHER_URL=https://${RANCHER_SERVER}/v2-beta/schemas
 
-./rancher --wait rm "${RANCHER_STACK_NAME}"
+# || true to ignore any failures in the rancher stack removal
+./rancher --wait rm "${RANCHER_STACK_NAME}" || true
 
 # RUN REPO SPECIFIC REMOVAL SCRIPTS, IF DIRECTORY EXISTS
 if [ -d "./scripts/removal_scripts" ]; then
